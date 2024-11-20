@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laravel Telescope UI (Tailwind CSS)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <!-- Header -->
+  <header class="bg-gray-800 text-white py-4">
+    <div class="container mx-auto flex justify-between items-center px-4">
+      <h1 class="text-xl font-bold">Telescope Dashboard</h1>
+      <nav class="space-x-4">
+        <a href="#" class="text-sm hover:text-gray-300">Requests</a>
+        <a href="#" class="text-sm hover:text-gray-300">Queries</a>
+        <a href="#" class="text-sm hover:text-gray-300">Jobs</a>
+        <a href="#" class="text-sm hover:text-gray-300">Exceptions</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto py-6 px-4">
+    <!-- Filter and Search -->
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold text-gray-800">Requests</h2>
+      <div class="flex space-x-2">
+        <input
+          type="text"
+          placeholder="Search requests..."
+          class="w-64 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-300"
+        />
+        <select
+          class="p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring focus:ring-indigo-300"
+        >
+          <option value="">All Methods</option>
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full bg-white shadow-md rounded-lg overflow-hidden">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="text-left px-6 py-3 text-gray-600 text-sm font-medium">Method</th>
+            <th class="text-left px-6 py-3 text-gray-600 text-sm font-medium">URL</th>
+            <th class="text-left px-6 py-3 text-gray-600 text-sm font-medium">Status</th>
+            <th class="text-left px-6 py-3 text-gray-600 text-sm font-medium">Duration</th>
+            <th class="text-left px-6 py-3 text-gray-600 text-sm font-medium">Time</th>
+            <th class="text-left px-6 py-3 text-gray-600 text-sm font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Example Row -->
+          <tr class="border-t">
+            <td class="px-6 py-4 text-sm text-gray-800 font-medium">GET</td>
+            <td class="px-6 py-4 text-sm text-gray-800">/api/users</td>
+            <td class="px-6 py-4 text-sm text-green-500 font-medium">200</td>
+            <td class="px-6 py-4 text-sm text-gray-800">120ms</td>
+            <td class="px-6 py-4 text-sm text-gray-600">2024-11-18 12:34</td>
+            <td class="px-6 py-4 text-sm">
+              <button class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-indigo-600">View</button>
+            </td>
+          </tr>
+          <!-- More Rows -->
+          <tr class="border-t">
+            <td class="px-6 py-4 text-sm text-gray-800 font-medium">POST</td>
+            <td class="px-6 py-4 text-sm text-gray-800">/api/orders</td>
+            <td class="px-6 py-4 text-sm text-red-500 font-medium">500</td>
+            <td class="px-6 py-4 text-sm text-gray-800">200ms</td>
+            <td class="px-6 py-4 text-sm text-gray-600">2024-11-18 12:40</td>
+            <td class="px-6 py-4 text-sm">
+              <button class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs hover:bg-indigo-600">View</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</body>
+</html>

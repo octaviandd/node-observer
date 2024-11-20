@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telescope</title>
+</head>
+<body>
+  <h1>Telescope Dashboard</h1>
+  <table id="logs">
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>URL</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <script>
+    fetch('/api/requests')
+      .then((res) => res.json())
+      .then((data) => {
+        const tbody = document.querySelector('#logs tbody');
+        data.forEach((log) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${log.method}</td><td>${log.url}</td><td>${log.timestamp}</td>`;
+          tbody.appendChild(row);
+        });
+      });
+  </script>
+</body>
+</html>
