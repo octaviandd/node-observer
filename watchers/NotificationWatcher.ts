@@ -1,4 +1,4 @@
-import knex from 'knex';
+import connection from '../database/connection';
 import Watcher from '../core/Watcher';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -19,13 +19,13 @@ NotificationWatcher.addContent = async function(content: any) {
   };
 
   try {
-    const result = await knex('telescope_entries').insert(newEntry);
+    const result = await connection('telescope_entries').insert(newEntry);
     return result;
   } catch (error) {
     console.error('Error adding content to NotificationWatcher', error);
   }
 }
 
-NotificationWatcher.getIndex = async () => (await knex('telescope_entries').where({ type: 'notification' }));
+NotificationWatcher.getIndex = async () => (await connection('telescope_entries').where({ type: 'notification' }));
 
 export default NotificationWatcher;
