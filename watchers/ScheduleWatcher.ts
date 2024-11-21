@@ -1,16 +1,31 @@
+import knex from 'knex';
 import Watcher from '../core/Watcher';
+import { v4 as uuidv4 } from 'uuid';
 
-class ScheduleWatcher extends Watcher {
-  type: string;
-  content: any[];
-  should_display_on_index: boolean;
+const ScheduleWatcher = Object.create(Watcher);
 
-  constructor() {
-    super();
-    this.type = 'schedule';
-    this.content = [];
-    this.should_display_on_index = true
+ScheduleWatcher.type = 'schedule';
+ScheduleWatcher.should_display_on_index = true;
+ScheduleWatcher.content = {};
+
+ScheduleWatcher.addContent = async function(content: any) {
+  const newEntry = {
+    uuid: uuidv4(),
+    batch_id: uuidv4(),
+    family_hash: uuidv4(),
+    type: 'schedule',
+    should_display_on_index: true,
+    content: JSON.stringify(content),
+  };
+
+  try {
+    const result = await knex('telescope_entries').insert(newEntry);
+    return result;
+  } catch (error) {
+    console.error('Error adding content to ScheduleWatcher', error);
   }
 }
+
+ScheduleWatcher.getIndex = async () => (await knex('telescope_entries').where({ type: 'schedule' }));
 
 export default ScheduleWatcher;

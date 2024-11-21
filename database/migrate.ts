@@ -1,4 +1,4 @@
-import connection from './connection.js';
+import connection from './connection';
 import fs from 'fs/promises';
 import path from 'path';
 

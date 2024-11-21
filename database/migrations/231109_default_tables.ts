@@ -1,4 +1,7 @@
-export async function up(knex) {
+
+import {Knex} from 'knex';
+
+export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('telescope_monitoring', (table) => {
     table.string('tag').primary(); // Unique primary key for monitored tags
   });
@@ -31,7 +34,7 @@ export async function up(knex) {
   });
 }
 
-export async function down(knex) {
+export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTable('telescope_entries');
   await knex.schema.dropTable('telescope_entries_tags');
   await knex.schema.dropTable('telescope_monitoring');

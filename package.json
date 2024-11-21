@@ -3,33 +3,43 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "prisma": {
     "schema": "src/prisma/schema.prisma"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.jss",
-    "dev": "nodemon -q dist/index.js",
+    "build-ts": "tsc",
+    "build": "npm run build-ts && npm run lint",
+    "debug": "npm run build && npm run watch-debug",
+    "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
+    "serve-debug": "nodemon --inspect dist/server.js",
+    "serve": "node dist/server.js",
+    "start": "npm run serve",
     "clean": "rm -rf dist",
-    "build:prod": "npm run clean && npm run build"
+    "test": "jest --forceExit --coverage --verbose",
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-sass\" \"npm run watch-ts\" \"npm run serve-debug\"",
+    "watch-node": "nodemon dist/server.js",
+    "watch-sass": "sass --watch src/public/css/main.scss dist/public/css/main.css",
+    "watch-test": "npm run test -- --watchAll",
+    "watch-ts": "tsc -w",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-sass\" \"npm run watch-ts\" \"npm run watch-node\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-openid-connect": "^2.17.1",
-    "knex": "^3.1.0"
+    "knex": "^3.1.0",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.12.7",
     "concurrently": "^8.2.2",
+    "eslint": "^9.15.0",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"

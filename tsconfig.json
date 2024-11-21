@@ -1,12 +1,19 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "module": "ES2020",
-    "rootDir": "./", // Root is correct since you want to include index.ts in the root
-    "outDir": "./dist", // Compiled files will go to the "dist" directory
+    "module": "commonjs",
+    "outDir": "dist", // Compiled files will go to the "dist" directory
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "paths": {
+      // This is solely to stop a bug with @types/node as of 12/15/2023
+      "undici-types": [
+        "./node_modules/undici-types/index.d.ts"
+      ],
+    }
   },
-  "include": ["index.ts", "src/**/*.ts", "./global.d.ts"], // Include the index.ts at root and all .ts files in src
+  "include": ["**/*.ts"], // Include all .ts files
   "exclude": ["node_modules", "client"] // Exclude the client directory
 }
