@@ -1,49 +1,38 @@
-class BaseCollector {
-  collectorName: string;
-  collectorType: string;
-  should_display_on_index: boolean;
+import { Request, Response } from 'express';
 
+class Watcher {
   constructor() {
-    this.collectorName = 'observatory_entries';
-    this.collectorType = 'base';
-    this.should_display_on_index = true;
-  }
-
-  capture() {
-    throw new Error('Method not implemented');
   }
 
   /**
-   * Add log to the collector
-   * @param {Object} log 
+   * Returns index entries.
+   * @param res
+   * @param req
+   * @returns JSON
    */
-  
+  index(res: Response, req: Request) {
+    return res.status(200).json({ message: 'Index' });
+  }
 
   /**
-   * Validate the log entry
-   * @param {*} log 
-   * @returns boolean
+   * Return class view.
+   * @param res
+   * @param req
+   * @returns
    */
- 
+  view(res: Response, req: Request) {
+    return res.status(200).json({ message: 'View' });
+  }
 
-  /**
-   * Get the logs
-   * @returns Array
-   */
-  
+  status() {
+    if (!global.config.observatoryEnabled) {
+      return 'disabled';
+    } else if (!global.config.observatoryPaused) {
+      return 'paused';
+    }
 
-  /**
-   * Filter logs
-   * @param {*} filter 
-   * @returns 
-   */
- 
-
-  /**
-   * Clear logs
-   */
-  
- 
+    return 'enabled'
+  }
 }
 
-export default BaseCollector;
+export default Watcher;

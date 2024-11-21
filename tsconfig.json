@@ -7,6 +7,6 @@
     "strict": true,
     "esModuleInterop": true
   },
-  "include": ["index.ts", "src/**/*.ts", "src/prisma/**/*.ts"], // Include the index.ts at root and all .ts files in src
+  "include": ["index.ts", "src/**/*.ts", "./global.d.ts"], // Include the index.ts at root and all .ts files in src
   "exclude": ["node_modules", "client"] // Exclude the client directory
 }
