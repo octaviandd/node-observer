@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "ES2020",
+    "rootDir": "./", // Root is correct since you want to include index.ts in the root
+    "outDir": "./dist", // Compiled files will go to the "dist" directory
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "include": ["index.ts", "src/**/*.ts", "src/prisma/**/*.ts"], // Include the index.ts at root and all .ts files in src
+  "exclude": ["node_modules", "client"] // Exclude the client directory
+}
