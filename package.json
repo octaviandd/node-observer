@@ -18,10 +18,9 @@
     "test": "jest --forceExit --coverage --verbose",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-sass\" \"npm run watch-ts\" \"npm run serve-debug\"",
     "watch-node": "nodemon dist/server.js",
-    "watch-sass": "sass --watch src/public/css/main.scss dist/public/css/main.css",
     "watch-test": "npm run test -- --watchAll",
     "watch-ts": "tsc -w",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-sass\" \"npm run watch-ts\" \"npm run watch-node\""
+    "watch": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\""
   },
   "author": "",
   "license": "ISC",
@@ -32,6 +31,7 @@
     "express": "^4.21.1",
     "express-openid-connect": "^2.17.1",
     "knex": "^3.1.0",
+    "mysql2": "^3.11.4",
     "uuid": "^11.0.3"
   },
   "devDependencies": {

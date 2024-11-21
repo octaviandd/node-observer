@@ -4,7 +4,6 @@ import RequestWatcher from '../watchers/RequestWatcher';
 const router = Router();
 
 router.get('/logs', (req, res) => {
-  const requestWatcher = new RequestWatcher();
   // res.json(requestCollector.getLogs());
 });
 
@@ -20,6 +19,10 @@ router.get('/logs', (req, res) => {
 //   res.json({ message: 'Notification added' });
 // })
 
+router.get('/', (req, res) => {
+  // Handle home index
+  console.log('Home index');
+});
 
 
 router.post('/observatory-api/mail', (req, res) => {
@@ -124,7 +127,6 @@ router.get('/observatory-api/models/:observatoryEntryId', (req, res) => {
 });
 
 // // Requests entries...
-// const requestsController = new RequestsCollector();
 // router.post('/observatory-api/requests', (req, res) => requestsController.index(req, res));
 // router.get('/observatory-api/requests/:observatoryEntryId', (req, res) => {
 //   // Handle requests show

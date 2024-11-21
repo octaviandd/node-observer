@@ -1,5 +1,7 @@
 import express from 'express';
 import { runMigration, rollbackMigration } from './database/migrate';
+import { requestLogger } from './middleware/requestLogger';
+import routes from './routes/routes';
 
 const app = express();
 
@@ -7,16 +9,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Use the requestLogger middleware to gather data.
-// app.use(requestLogger);
+app.use(requestLogger);
+
+app.use('/api', routes);
 
 // API routes
-// app.use('/api', routes);
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
 
-const PORT = process.env.PORT || 8000;
+const PORT = 9999;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`Server running on port: ${(global as any)}`);
 });
 
 // runMigration().catch((err) => {

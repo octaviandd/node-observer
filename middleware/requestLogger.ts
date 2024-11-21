@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import RequestWatcher from '../watchers/RequestWatcher';
-const requestCollector = new RequestWatcher();
+const requestCollector = Object.create(RequestWatcher);
 
 function requestLogger(req: Request, res: Response, next: NextFunction){
   const start = Date.now();
 
   res.on('finish', () => {
+    console.log('middleware')
     const duration = Date.now() - start;
 
     requestCollector.addContent({
@@ -25,8 +26,6 @@ function requestLogger(req: Request, res: Response, next: NextFunction){
       headers: req.headers,
       body: 'body',
     });
-
-    console.log(`Request to ${req.path} took ${duration}ms`);
   });
 
   next();
