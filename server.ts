@@ -1,6 +1,5 @@
 import express from 'express';
-import './config/observatory'; // Ensure the config is loaded
-import '../database/migrate'; // Run migrations automatically
+import { runMigration, rollbackMigration } from './database/migrate';
 
 const app = express();
 
@@ -17,8 +16,17 @@ const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`Database URL: ${(global as any).config.databaseUrl}`);
-  console.log(`Server running on port: ${(global as any).config.port}`);
+  console.log(`Server running on port: ${(global as any)}`);
 });
+
+// runMigration().catch((err) => {
+//   console.error(err);
+//   process.exit(1);
+// });
+
+// rollbackMigration().catch((err) => {
+//   console.error(err);
+//   process.exit(1);
+// })
 
 export default app;

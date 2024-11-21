@@ -36,11 +36,6 @@ async function runMigration(){
   await connection.destroy();
 }
 
-runMigration().catch((err) => {
-  console.error(err);
-  process.exit(1);
-})
-
 async function rollbackMigration(){
   // Connect to the database
   const files = await fs.readdir(migrationsDir);
@@ -65,10 +60,5 @@ async function rollbackMigration(){
   // Close the connection
   await connection.destroy();
 }
-
-rollbackMigration().catch((err) => {
-  console.error(err);
-  process.exit(1);
-})
 
 export { runMigration, rollbackMigration };
