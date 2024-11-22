@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const CacheWatcher = Object.create(Watcher);
 
-CacheWatcher.type = 'exception';
+CacheWatcher.type = 'cache';
 CacheWatcher.should_display_on_index = true;
 CacheWatcher.content = {};
 
