@@ -19,13 +19,13 @@ MailWatcher.addContent = async function(content: any) {
   };
 
   try {
-    const result = await connection('telescope_entries').insert(newEntry);
+    const result = await connection('observatory_entries').insert(newEntry);
     return result;
   } catch (error) {
     console.error('Error adding content to MailWatcher', error);
   }
 }
 
-MailWatcher.getIndex = async () => (await connection('telescope_entries').where({ type: 'mail' }));
+MailWatcher.getIndex = async () => (await connection('observatory_entries').where({ type: 'mail' }));
 
 export default MailWatcher;

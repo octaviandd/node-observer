@@ -2,18 +2,18 @@ import connection from '../database/connection';
 import Watcher from '../core/Watcher';
 import { v4 as uuidv4 } from 'uuid';
 
-const LogWatcher = Object.create(Watcher);
+const DumpWatcher = Object.create(Watcher);
 
-LogWatcher.type = 'log';
-LogWatcher.should_display_on_index = true;
-LogWatcher.content = {};
+DumpWatcher.type = 'dump';
+DumpWatcher.should_display_on_index = true;
+DumpWatcher.content = {};
 
-LogWatcher.addContent = async function(content: any) {
+DumpWatcher.addContent = async function(content: any) {
   const newEntry = {
     uuid: uuidv4(),
     batch_id: uuidv4(),
     family_hash: uuidv4(),
-    type: 'log',
+    type: this.type,
     should_display_on_index: true,
     content: JSON.stringify(content),
   };
@@ -22,10 +22,10 @@ LogWatcher.addContent = async function(content: any) {
     const result = await connection('observatory_entries').insert(newEntry);
     return result;
   } catch (error) {
-    console.error('Error adding content to LogWatcher', error);
+    console.error('Error adding content to DumpWatcher', error);
   }
 }
 
-LogWatcher.getIndex = async () => (await connection('observatory_entries').where({ type: 'log' }));
+DumpWatcher.getIndex = async () => (await connection('observatory_entries').where({ type: 'dump' }));
 
-export default LogWatcher;
+export default DumpWatcher;

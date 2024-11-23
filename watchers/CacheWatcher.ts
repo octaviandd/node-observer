@@ -19,13 +19,13 @@ CacheWatcher.addContent = async function(content: any) {
   };
 
   try {
-    const result = await connection('telescope_entries').insert(newEntry);
+    const result = await connection('observatory_entries').insert(newEntry);
     return result;
   } catch (error) {
     console.error('Error adding content to CacheWatcher', error);
   }
 }
 
-CacheWatcher.getIndex = async () => (await connection('telescope_entries').where({ type: 'cache' }));
+CacheWatcher.getIndex = async () => (await connection('observatory_entries').where({ type: 'cache' }));
 
 export default CacheWatcher;

@@ -2,13 +2,13 @@ import connection from '../database/connection';
 import Watcher from '../core/Watcher';
 import { v4 as uuidv4 } from 'uuid';
 
-const EventsWatcher = Object.create(Watcher);
+const EventWatcher = Object.create(Watcher);
 
-EventsWatcher.type = 'event';
-EventsWatcher.should_display_on_index = true;
-EventsWatcher.content = {};
+EventWatcher.type = 'event';
+EventWatcher.should_display_on_index = true;
+EventWatcher.content = {};
 
-EventsWatcher.addContent = async function(content: any) {
+EventWatcher.addContent = async function(content: any) {
   const newEntry = {
     uuid: uuidv4(),
     batch_id: uuidv4(),
@@ -19,13 +19,13 @@ EventsWatcher.addContent = async function(content: any) {
   };
 
   try {
-    const result = await connection('telescope_entries').insert(newEntry);
+    const result = await connection('observatory_entries').insert(newEntry);
     return result;
   } catch (error) {
-    console.error('Error adding content to EventsWatcher', error);
+    console.error('Error adding content to EventWatcher', error);
   }
 }
 
-EventsWatcher.getIndex = async () => (await connection('telescope_entries').where({ type: 'cache' }));
+EventWatcher.getIndex = async () => (await connection('observatory_entries').where({ type: 'event' }));
 
-export default EventsWatcher;
+export default EventWatcher;
