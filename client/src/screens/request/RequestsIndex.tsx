@@ -1,40 +1,116 @@
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+/** @format */
 
-export default function RequestPreview() {
-  const [requests, setRequests] = useState([
-    {
-      id: 1,
-      title: 'Request 1',
-      description: 'This is the first request'
-    },
-    {
-      id: 2,
-      title: 'Request 2',
-      description: 'This is the second request'
-    },
-    {
-      id: 3,
-      title: 'Request 3',
-      description: 'This is the third request'
+import React, { useEffect, useState } from "react";
+import { Link, useLoaderData } from "react-router-dom";
+import useSWR from "swr";
+
+interface RequestResponse {
+  uuid: number;
+  content: {
+    method: string;
+    url: string;
+    duration: number;
+    status: number;
+    timestamp: Date;
+  };
+}
+
+export async function loader() {
+  const data = await fetch("/api/data/requests");
+  const requests = await data.json();
+  return { requests };
+}
+
+export default function RequestsIndex() {
+  const { requests } = useLoaderData() as { requests: RequestResponse[] };
+
+  const timeAgo = (time: Date) => {
+    const currentTime = new Date();
+    const timeDifference = currentTime.getTime() - new Date(time).getTime();
+    const seconds = Math.floor(timeDifference / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      return `${days} day${days == 1 ? "" : "(s)"} ago`;
+    } else if (hours > 0) {
+      return `${hours} hour${hours == 1 ? "" : "(s)"} ago`;
+    } else if (minutes > 0) {
+      return `${minutes} minute${minutes == 1 ? "" : "(s)"} ago`;
+    } else {
+      return `${seconds} second${seconds == 1 ? "(s)" : ""} ago`;
     }
-  ])
+  };
 
   return (
     <div className="flex flex-col">
-      <div className='bg-white px-4 py-3'>
+      <div className="bg-white px-4 py-3">
         <span>Requests</span>
       </div>
-      <div className='bg-[]'>
-        {requests.map(request => (
-          <Link to={`${request.id}`}>
-            <div key={request.id} className='px-4 py-3'>
-              <span>{request.title}</span>
-              <span>{request.description}</span>
-            </div>
-          </Link>
-        ))}
+      <div className="bg-[]">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+          <span className="col-span-1">Verb</span>
+          <span className="col-span-4">Path</span>
+          <span className="col-span-2">Status</span>
+          <span className="col-span-2">Duration</span>
+          <span className="col-span-2">Happened</span>
+          <span className="col-span-1"></span>
+        </div>
+        <table className="w-full">
+          {requests.map((request) => (
+            <tr
+              key={request.uuid}
+              className="grid w-full grid-cols-12 py-3 bg-white px-4"
+            >
+              <td className="col-span-1">
+                <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  {request.content.method}
+                </span>
+              </td>
+              <td className="col-span-4">{request.content.url}</td>
+              <td className="col-span-2">
+                <span
+                  className={`${
+                    request.content.status === 200
+                      ? "bg-[#D1FAE4]"
+                      : request.content.status === 404
+                      ? "bg-[#D1FAE4]"
+                      : "bg-red-300"
+                  } px-2 py-1 rounded-md`}
+                >
+                  {request.content.status}
+                </span>
+              </td>
+              <td className="col-span-2">{request.content.duration}ms</td>
+              <td className="col-span-1">
+                {timeAgo(request.content.timestamp)}
+              </td>
+              <td className="col-span-1 ml-auto">
+                <Link
+                  to={`${request.uuid}`}
+                  state={{ requestId: request.uuid }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="#D1D5DA"
+                    className="hover:fill-[#000]"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.75 9.25a.75.75 0 000 1.5h4.59l-2.1 1.95a.75.75 0 001.02 1.1l3.5-3.25a.75.75 0 000-1.1l-3.5-3.25a.75.75 0 10-1.02 1.1l2.1 1.95H6.75z"
+                      clipRule="evenodd"
+                    ></path>
+                  </svg>
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </table>
       </div>
     </div>
-  )
+  );
 }
