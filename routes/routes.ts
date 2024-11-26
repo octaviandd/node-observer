@@ -1,9 +1,11 @@
-import { Router } from 'express';
-import RequestWatcher from '../watchers/RequestWatcher';
+/** @format */
+
+import { Router } from "express";
+import RequestWatcher from "../watchers/RequestWatcher";
 
 const router = Router();
 
-router.get('/logs', (req, res) => {
+router.get("/logs", (req, res) => {
   // res.json(requestCollector.getLogs());
 });
 
@@ -19,182 +21,183 @@ router.get('/logs', (req, res) => {
 //   res.json({ message: 'Notification added' });
 // })
 
-router.get('/', (req, res) => {
+router.get("/", (req, res) => {
   // Handle home index
-  console.log('Home index');
+  console.log("Home index");
 });
 
-
-router.post('/observatory-api/mail', (req, res) => {
+router.post("/mail", (req, res) => {
   // Handle mail index
 });
-router.get('/observatory-api/mail/:observatoryEntryId', (req, res) => {
+router.get("/mail/:observatoryEntryId", (req, res) => {
   // Handle mail show
 });
-router.get('/observatory-api/mail/:observatoryEntryId/preview', (req, res) => {
+router.get("/mail/:observatoryEntryId/preview", (req, res) => {
   // Handle mail preview
 });
-router.get('/observatory-api/mail/:observatoryEntryId/download', (req, res) => {
+router.get("/mail/:observatoryEntryId/download", (req, res) => {
   // Handle mail download
 });
 
 // Exception entries...
-router.post('/observatory-api/exceptions', (req, res) => {
+router.post("/exceptions", (req, res) => {
   // Handle exceptions index
 });
-router.get('/observatory-api/exceptions/:observatoryEntryId', (req, res) => {
+router.get("/exceptions/:observatoryEntryId", (req, res) => {
   // Handle exceptions show
 });
-router.put('/observatory-api/exceptions/:observatoryEntryId', (req, res) => {
+router.put("/exceptions/:observatoryEntryId", (req, res) => {
   // Handle exceptions update
 });
 
 // Dump entries...
-router.post('/observatory-api/dumps', (req, res) => {
+router.post("/dumps", (req, res) => {
   // Handle dumps index
 });
 
 // Log entries...
-router.post('/observatory-api/logs', (req, res) => {
+router.post("/logs", (req, res) => {
   // Handle logs index
 });
-router.get('/observatory-api/logs/:observatoryEntryId', (req, res) => {
+router.get("/logs/:observatoryEntryId", (req, res) => {
   // Handle logs show
 });
 
 // Notifications entries...
-router.post('/observatory-api/notifications', (req, res) => {
+router.post("/notifications", (req, res) => {
   // Handle notifications index
 });
-router.get('/observatory-api/notifications/:observatoryEntryId', (req, res) => {
+router.get("/notifications/:observatoryEntryId", (req, res) => {
   // Handle notifications show
 });
 
 // Queue entries...
-router.post('/observatory-api/jobs', (req, res) => {
+router.post("/jobs", (req, res) => {
   // Handle jobs index
 });
-router.get('/observatory-api/jobs/:observatoryEntryId', (req, res) => {
+router.get("/jobs/:observatoryEntryId", (req, res) => {
   // Handle jobs show
 });
 
 // Queue Batches entries...
-router.post('/observatory-api/batches', (req, res) => {
+router.post("/batches", (req, res) => {
   // Handle batches index
 });
-router.get('/observatory-api/batches/:observatoryEntryId', (req, res) => {
+router.get("/batches/:observatoryEntryId", (req, res) => {
   // Handle batches show
 });
 
 // Events entries...
-router.post('/observatory-api/events', (req, res) => {
+router.post("/events", (req, res) => {
   // Handle events index
 });
-router.get('/observatory-api/events/:observatoryEntryId', (req, res) => {
+router.get("/events/:observatoryEntryId", (req, res) => {
   // Handle events show
 });
 
 // Gates entries...
-router.post('/observatory-api/gates', (req, res) => {
+router.post("/gates", (req, res) => {
   // Handle gates index
 });
-router.get('/observatory-api/gates/:observatoryEntryId', (req, res) => {
+router.get("/gates/:observatoryEntryId", (req, res) => {
   // Handle gates show
 });
 
 // Cache entries...
-router.post('/observatory-api/cache', (req, res) => {
+router.post("/cache", (req, res) => {
   // Handle cache index
 });
-router.get('/observatory-api/cache/:observatoryEntryId', (req, res) => {
+router.get("/cache/:observatoryEntryId", (req, res) => {
   // Handle cache show
 });
 
 // Queries entries...
-router.post('/observatory-api/queries', (req, res) => {
+router.post("/queries", (req, res) => {
   // Handle queries index
 });
-router.get('/observatory-api/queries/:observatoryEntryId', (req, res) => {
+router.get("/queries/:observatoryEntryId", (req, res) => {
   // Handle queries show
 });
 
 // Eloquent entries...
-router.post('/observatory-api/models', (req, res) => {
+router.post("/models", (req, res) => {
   // Handle models index
 });
-router.get('/observatory-api/models/:observatoryEntryId', (req, res) => {
+router.get("/models/:observatoryEntryId", (req, res) => {
   // Handle models show
 });
 
-// // Requests entries...
-// router.post('/observatory-api/requests', (req, res) => requestsController.index(req, res));
-// router.get('/observatory-api/requests/:observatoryEntryId', (req, res) => {
-//   // Handle requests show
-// });
+// Requests entries...
+
+const requestController = Object.create(RequestWatcher);
+router.get("/requests", (req, res) => requestController.getIndex(req, res));
+router.get("/requests/:requestId", (req, res) =>
+  requestController.getView(req, res)
+);
 
 // View entries...
-router.post('/observatory-api/views', (req, res) => {
+router.post("/views", (req, res) => {
   // Handle views index
 });
-router.get('/observatory-api/views/:observatoryEntryId', (req, res) => {
+router.get("/views/:observatoryEntryId", (req, res) => {
   // Handle views show
 });
 
 // Artisan Commands entries...
-router.post('/observatory-api/commands', (req, res) => {
+router.post("/commands", (req, res) => {
   // Handle commands index
 });
-router.get('/observatory-api/commands/:observatoryEntryId', (req, res) => {
+router.get("/commands/:observatoryEntryId", (req, res) => {
   // Handle commands show
 });
 
 // Scheduled Commands entries...
-router.post('/observatory-api/schedule', (req, res) => {
+router.post("/schedule", (req, res) => {
   // Handle schedule index
 });
-router.get('/observatory-api/schedule/:observatoryEntryId', (req, res) => {
+router.get("/schedule/:observatoryEntryId", (req, res) => {
   // Handle schedule show
 });
 
 // Redis Commands entries...
-router.post('/observatory-api/redis', (req, res) => {
+router.post("/redis", (req, res) => {
   // Handle redis index
 });
-router.get('/observatory-api/redis/:observatoryEntryId', (req, res) => {
+router.get("/redis/:observatoryEntryId", (req, res) => {
   // Handle redis show
 });
 
 // Client Requests entries...
-router.post('/observatory-api/client-requests', (req, res) => {
+router.post("/client-requests", (req, res) => {
   // Handle client requests index
 });
-router.get('/observatory-api/client-requests/:observatoryEntryId', (req, res) => {
+router.get("/client-requests/:observatoryEntryId", (req, res) => {
   // Handle client requests show
 });
 
 // Monitored Tags...
-router.get('/observatory-api/monitored-tags', (req, res) => {
+router.get("/monitored-tags", (req, res) => {
   // Handle monitored tags index
 });
-router.post('/observatory-api/monitored-tags', (req, res) => {
+router.post("/monitored-tags", (req, res) => {
   // Handle monitored tags store
 });
-router.post('/observatory-api/monitored-tags/delete', (req, res) => {
+router.post("/monitored-tags/delete", (req, res) => {
   // Handle monitored tags destroy
 });
 
 // Toggle Recording...
-router.post('/observatory-api/toggle-recording', (req, res) => {
+router.post("/toggle-recording", (req, res) => {
   // Handle toggle recording
 });
 
 // Clear Entries...
-router.delete('/observatory-api/entries', (req, res) => {
+router.delete("/entries", (req, res) => {
   // Handle entries destroy
 });
-  // Handle entries destroy
+// Handle entries destroy
 
-router.get('/:view?', (req, res) => {
+router.get("/:view?", (req, res) => {
   // Handle home index
 });
 

@@ -1,7 +1,15 @@
 /** @format */
 
-import { Client } from "./../node_modules/undici-types/client.d";
-/** @format */
+declare global {
+  namespace Express {
+    interface Request {
+      session?: {
+        id: string;
+        [key: string]: any;
+      };
+    }
+  }
+}
 
 import { Request, Response, NextFunction } from "express";
 import EventsWatcher from "../watchers/EventWatcher";
@@ -80,14 +88,14 @@ async function withObserver<T extends LoggerType>(
           duration,
           ipAddress: req.ip,
           memoryUsage: process.memoryUsage(),
-          middleware: "middleware",
-          controllerAction: "requestLogger",
+          middleware: req.route ? req.route.path : "unknown",
+          controllerAction: req.route ? req.route.stack[0].name : "unknown",
           hostname: req.hostname,
           payload: req.body,
-          session: "session",
-          response: "response",
+          session: req.session ? req.session.id : "none",
+          response: res.locals || "none",
           headers: req.headers,
-          body: "body",
+          body: req.body,
         });
       });
       next();
@@ -168,12 +176,16 @@ function globalCollector(
       console.log(e);
     }
   } else if (packageName === "nodemailer") {
+    console.log(pkg);
+
     const originalTrigger = pkg.createTransport;
 
     try {
       pkg.createTransport = function (...args: any) {
         const transporterInstance = originalTrigger.apply(this, args);
         const originalSendMail = transporterInstance.sendMail;
+
+        console.log(originalSendMail.prototype);
 
         transporterInstance.sendMail = function (
           mailOptions: any,
@@ -211,23 +223,27 @@ function globalCollector(
             res.on("finish", () => {
               const duration = Date.now() - start;
 
-              requestLogger.addContent({
-                method: req.method,
-                url: req.url,
-                timestamp: new Date(),
-                status: res.statusCode,
-                duration,
-                ipAddress: req.ip,
-                memoryUsage: process.memoryUsage(),
-                middleware: "middleware",
-                controllerAction: "requestLogger",
-                hostname: req.hostname,
-                payload: req.body,
-                session: "session",
-                response: "response",
-                headers: req.headers,
-                body: "body",
-              });
+              if (!req.baseUrl.includes("observatory-api")) {
+                requestLogger.addContent({
+                  method: req.method,
+                  url: req.url,
+                  timestamp: new Date(),
+                  status: res.statusCode,
+                  duration,
+                  ipAddress: req.ip,
+                  memoryUsage: process.memoryUsage(),
+                  middleware: req.route ? req.route.path : "unknown",
+                  controllerAction: req.route
+                    ? req.route.stack[0].name
+                    : "unknown",
+                  hostname: req.hostname,
+                  payload: req.body,
+                  session: req.session ? req.session.id : "none",
+                  response: res.locals || "none",
+                  headers: req.headers,
+                  body: req.body,
+                });
+              }
             });
 
             return originalMiddleware(req, res, next);
@@ -310,26 +326,6 @@ function globalCollector(
       });
 
       return originalGet.apply(this, args);
-    };
-  } else if (packageName === "commander") {
-    const originalAction = pkg.action;
-
-    pkg.action = function (...args: any) {
-      commandLogger.addContent({
-        test: "test",
-      });
-
-      return originalAction.apply(this, args);
-    };
-  } else if (packageName === "knex") {
-    console.log(pkg);
-    const originalAction = pkg.QueryBuilder;
-
-    console.log(originalAction);
-    pkg.QueryBuilder = function (...args: any) {
-      queryLogger("test");
-      console.log("hit");
-      return originalAction(this, args);
     };
   }
 

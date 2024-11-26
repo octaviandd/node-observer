@@ -1,12 +1,16 @@
-import { Request, Response, NextFunction } from 'express';
-import RequestWatcher from '../watchers/RequestWatcher';
+/** @format */
+
+import { Request, Response, NextFunction } from "express";
+import RequestWatcher from "../watchers/RequestWatcher";
 const requestCollector = Object.create(RequestWatcher);
 
-function requestLogger(req: Request, res: Response, next: NextFunction){
+function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = Date.now();
 
-  res.on('finish', () => {
+  res.on("finish", () => {
     const duration = Date.now() - start;
+
+    console.log(req, res);
 
     requestCollector.addContent({
       method: req.method,
@@ -16,19 +20,18 @@ function requestLogger(req: Request, res: Response, next: NextFunction){
       duration,
       ipAddress: req.ip,
       memoryUsage: process.memoryUsage(),
-      middleware: 'middleware',
-      controllerAction: 'requestLogger',
+      middleware: "middleware",
+      controllerAction: "requestLogger",
       hostname: req.hostname,
       payload: req.body,
-      session: 'session',
-      response: 'response',
+      session: "session",
+      response: "response",
       headers: req.headers,
-      body: 'body',
+      body: "body",
     });
   });
 
   next();
 }
-
 
 export { requestLogger };

@@ -1,14 +1,16 @@
-import connection from '../database/connection';
-import Watcher from '../core/Watcher';
-import { v4 as uuidv4 } from 'uuid';
+/** @format */
+
+import connection from "../database/connection";
+import Watcher from "../core/Watcher";
+import { v4 as uuidv4 } from "uuid";
 
 const NotificationWatcher = Object.create(Watcher);
 
-NotificationWatcher.type = 'notification';
+NotificationWatcher.type = "notification";
 NotificationWatcher.should_display_on_index = true;
 NotificationWatcher.content = {};
 
-NotificationWatcher.addContent = async function(content: any) {
+NotificationWatcher.addContent = async function (content: any) {
   const newEntry = {
     uuid: uuidv4(),
     batch_id: uuidv4(),
@@ -19,13 +21,14 @@ NotificationWatcher.addContent = async function(content: any) {
   };
 
   try {
-    const result = await connection('observatory_entries').insert(newEntry);
+    const result = await connection("observatory_entries").insert(newEntry);
     return result;
   } catch (error) {
-    console.error('Error adding content to NotificationWatcher', error);
+    console.error("Error adding content to NotificationWatcher", error);
   }
-}
+};
 
-NotificationWatcher.getIndex = async () => (await connection('observatory_entries').where({ type: 'notification' }));
+NotificationWatcher.getIndex = async () =>
+  await connection("observatory_entries").where({ type: "notification" });
 
 export default NotificationWatcher;
