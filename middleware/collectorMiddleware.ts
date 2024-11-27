@@ -185,8 +185,6 @@ function globalCollector(
         const transporterInstance = originalTrigger.apply(this, args);
         const originalSendMail = transporterInstance.sendMail;
 
-        console.log(originalSendMail.prototype);
-
         transporterInstance.sendMail = function (
           mailOptions: any,
           callback: any

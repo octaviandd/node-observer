@@ -370,7 +370,7 @@ export default function App() {
             </li>
             <li className="nav-item">
               <Link
-                to="/mail"
+                to="/mails"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
               >
                 <svg

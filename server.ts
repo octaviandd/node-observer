@@ -95,8 +95,8 @@ app.get("/", async (req, res) => {
 
     // Message object
     let message = {
-      from: "Sender Name <sender@example.com>",
-      to: "Recipient <recipient@example.com>",
+      from: "<sender@example.com>",
+      to: "<recipient@example.com>",
       subject: "Nodemailer is unicode friendly ✔",
       text: "Hello to myself!",
       html: "<p><b>Hello</b> to myself!</p>",

@@ -2,18 +2,13 @@
 
 import { Router } from "express";
 import RequestWatcher from "../watchers/RequestWatcher";
+import MailWatcher from "../watchers/MailWatcher";
 
 const router = Router();
 
 router.get("/logs", (req, res) => {
   // res.json(requestCollector.getLogs());
 });
-
-// router.post("/observatory/mail", (req, res) => {
-//   const mailCollector = new MailCollector();
-//   mailCollector.addMail(req.body);
-//   res.json({ message: 'Mail added' });
-// })
 
 // router.post("/observatory/notifications", (req, res) => {
 //   const notificationCollector = new NotificationCollector();
@@ -26,17 +21,18 @@ router.get("/", (req, res) => {
   console.log("Home index");
 });
 
-router.post("/mail", (req, res) => {
-  // Handle mail index
-});
-router.get("/mail/:observatoryEntryId", (req, res) => {
-  // Handle mail show
-});
-router.get("/mail/:observatoryEntryId/preview", (req, res) => {
-  // Handle mail preview
-});
-router.get("/mail/:observatoryEntryId/download", (req, res) => {
-  // Handle mail download
+// Requests entries...
+
+const requestController = Object.create(RequestWatcher);
+router.get("/requests", (req, res) => requestController.getIndex(req, res));
+router.get("/requests/:requestId", (req, res) =>
+  requestController.getView(req, res)
+);
+
+const mailController = Object.create(MailWatcher);
+router.get("/mails", (req, res) => mailController.getIndex(req, res));
+router.get("/mails/:mailId", (req, res) => {
+  mailController.getView(req, res);
 });
 
 // Exception entries...
@@ -126,14 +122,6 @@ router.post("/models", (req, res) => {
 router.get("/models/:observatoryEntryId", (req, res) => {
   // Handle models show
 });
-
-// Requests entries...
-
-const requestController = Object.create(RequestWatcher);
-router.get("/requests", (req, res) => requestController.getIndex(req, res));
-router.get("/requests/:requestId", (req, res) =>
-  requestController.getView(req, res)
-);
 
 // View entries...
 router.post("/views", (req, res) => {

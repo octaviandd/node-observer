@@ -3,6 +3,7 @@
 import connection from "../database/connection";
 import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
+import { Response, Request } from "express";
 
 const MailWatcher = Object.create(Watcher);
 
@@ -28,7 +29,32 @@ MailWatcher.addContent = async function (content: any) {
   }
 };
 
-MailWatcher.getIndex = async () =>
-  await connection("observatory_entries").where({ type: "mail" });
+MailWatcher.getIndex = async (req: Request, res: Response) => {
+  try {
+    let data = await connection("observatory_entries")
+      .where({
+        type: "mail",
+      })
+      .orderBy("created_at", "desc");
+    return res.status(200).json(data);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+MailWatcher.getView = async (req: Request, res: Response) => {
+  console.log(req.params);
+  try {
+    let data = await connection("observatory_entries")
+      .where({
+        uuid: req.params.mailId,
+      })
+      .first();
+    console.log(data);
+    return res.status(200).json(data);
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 export default MailWatcher;

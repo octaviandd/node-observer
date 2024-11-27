@@ -44,7 +44,6 @@ RequestWatcher.getIndex = async (req: Request, res: Response) => {
 
 RequestWatcher.getView = async (req: Request, res: Response) => {
   try {
-    console.log(req.params);
     let data = await connection("observatory_entries")
       .where({
         uuid: req.params.requestId,

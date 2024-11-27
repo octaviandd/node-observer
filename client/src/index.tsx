@@ -5,8 +5,12 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import MailIndex from "./screens/mail/MailsIndex";
-import MailPreview from "./screens/mail/MailPreview";
+import MailsIndex, {
+  loader as MailIndexLoader,
+} from "./screens/mail/MailsIndex";
+import MailPreview, {
+  loader as MailViewLoader,
+} from "./screens/mail/MailPreview";
 import ExceptionIndex from "./screens/exception/ExceptionsIndex";
 import ExceptionPreview from "./screens/exception/ExceptionPreview";
 import DumpsIndex from "./screens/dump/DumpsIndex";
@@ -46,12 +50,14 @@ const router = createBrowserRouter([
     errorElement: <div>404</div>,
     children: [
       {
-        path: "/mail/:id",
+        path: "/mails/:mailId",
         element: <MailPreview />,
+        loader: MailViewLoader,
       },
       {
-        path: "/mail",
-        element: <MailIndex />,
+        path: "/mails",
+        element: <MailsIndex />,
+        loader: MailIndexLoader,
       },
       {
         path: "/exceptions/:id",
