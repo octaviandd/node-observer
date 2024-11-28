@@ -19,6 +19,7 @@ import knex from "knex";
 import cors from "cors";
 import connection from "./database/connection";
 
+globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
 globalCollector("nodemailer", { log: true }, (pkg: any) => {});
 globalCollector("express", { log: true }, (pkg: any) => {});
@@ -55,6 +56,13 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/observatory-api/data", routes);
 
+// let originalError = new Error();
+// console.log(originalError);
+
+// Error.captureStackTrace = function (error: Error, constructorOpt?: Function) {
+//   originalError.captureStackTrace(error, constructorOpt);
+// }
+
 // API routes
 app.get("/", async (req, res) => {
   res.send("Hello World");
@@ -73,6 +81,10 @@ app.get("/", async (req, res) => {
     message: "hello world",
   });
 
+  setTimeout(() => {
+    throw new Error("This is an uncaught exception!");
+  }, 1000);
+
   const eventEmiter = new EventEmitter();
   eventEmiter.emit("test");
 
@@ -81,8 +93,6 @@ app.get("/", async (req, res) => {
       console.error("Failed to create a testing account. " + err.message);
       return process.exit(1);
     }
-
-    console.log("Credentials obtained, sending message...");
 
     // Create a SMTP transporter object
     let transporter = nodemailer.createTransport({
@@ -109,10 +119,6 @@ app.get("/", async (req, res) => {
         console.log("Error occurred. " + err.message);
         return process.exit(1);
       }
-
-      console.log("Message sent: %s", info.messageId);
-      // Preview only available when sending through an Ethereal account
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
     });
   });
 });

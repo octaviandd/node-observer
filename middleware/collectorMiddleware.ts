@@ -24,8 +24,6 @@ import CacheWatcher from "../watchers/CacheWatcher";
 import CommandWatcher from "../watchers/CommandWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
 
-import { JobCallback } from "node-schedule";
-
 const eventLogger = Object.create(EventsWatcher);
 const requestLogger = Object.create(RequestWatcher);
 const jobLogger = Object.create(JobWatcher);
@@ -162,6 +160,29 @@ function globalCollector(
   options: GlobalCollectorOptions = {},
   callback: any
 ) {
+  console.log(packageName);
+  if (packageName === "exception") {
+    process.on("uncaughtException", (error: Error) => {
+      exceptionLogger.addContent({
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        time: new Date(),
+      });
+    });
+
+    process.on("unhandledRejection", (error: Error) => {
+      exceptionLogger.addContent({
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        time: new Date(),
+      });
+    });
+
+    return;
+  }
+
   if (!isPackageInstalled(packageName)) {
     throw new Error(`Package ${packageName} is not installed`);
   }
@@ -296,8 +317,8 @@ function globalCollector(
     try {
       pkg.cancelJob = function (...args: any) {
         scheduleLogger.addContent({
-          name: args.length > 2 ? args[0] : "",
-          info: args.length > 2 ? args[1] : args[0],
+          name: args[0],
+          info: "",
           time: new Date(),
           mode: "cancel",
         });

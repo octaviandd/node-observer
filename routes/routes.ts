@@ -6,6 +6,7 @@ import MailWatcher from "../watchers/MailWatcher";
 import RedisWatcher from "../watchers/RedisWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
 import NotificationWatcher from "../watchers/NotificationWatcher";
+import ExceptionWatcher from "../watchers/ExceptionWatcher";
 
 const router = Router();
 
@@ -64,15 +65,14 @@ router.get("/notifications/:notificationId", (req, res) => {
   notificationController.getView(req, res);
 });
 
+const exceptionController = Object.create(ExceptionWatcher);
 // Exception entries...
-router.post("/exceptions", (req, res) => {
-  // Handle exceptions index
+router.get("/exceptions", (req, res) => {
+  console.log("here");
+  exceptionController.getIndex(req, res);
 });
-router.get("/exceptions/:observatoryEntryId", (req, res) => {
-  // Handle exceptions show
-});
-router.put("/exceptions/:observatoryEntryId", (req, res) => {
-  // Handle exceptions update
+router.get("/exceptions/:exceptionId", (req, res) => {
+  exceptionController.getView(req, res);
 });
 
 // Dump entries...

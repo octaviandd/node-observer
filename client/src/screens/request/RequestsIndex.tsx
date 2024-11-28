@@ -54,9 +54,9 @@ export default function RequestsIndex() {
                 <td className="col-span-2">
                   <span
                     className={`${
-                      request.content.status === 200
+                      String(request.content.status).startsWith("2")
                         ? "bg-[#D1FAE4]"
-                        : request.content.status === 404
+                        : String(request.content.status).startsWith("3")
                         ? "bg-[#D1FAE4]"
                         : "bg-red-300"
                     } px-2 py-1 rounded-md`}

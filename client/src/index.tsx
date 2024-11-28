@@ -11,8 +11,12 @@ import MailsIndex, {
 import MailPreview, {
   loader as MailViewLoader,
 } from "./screens/mail/MailPreview";
-import ExceptionIndex from "./screens/exception/ExceptionsIndex";
-import ExceptionPreview from "./screens/exception/ExceptionPreview";
+import ExceptionIndex, {
+  loader as ExceptionIndexLoader,
+} from "./screens/exception/ExceptionsIndex";
+import ExceptionPreview, {
+  loader as ExceptionPreviewLoader,
+} from "./screens/exception/ExceptionPreview";
 import DumpsIndex from "./screens/dump/DumpsIndex";
 import NotificationsIndex, {
   loader as NotificationsIndexLoader,
@@ -72,12 +76,14 @@ const router = createBrowserRouter([
         loader: MailIndexLoader,
       },
       {
-        path: "/exceptions/:id",
+        path: "/exceptions/:exceptionId",
         element: <ExceptionPreview />,
+        loader: ExceptionPreviewLoader,
       },
       {
         path: "/exceptions",
         element: <ExceptionIndex />,
+        loader: ExceptionIndexLoader,
       },
       {
         path: "/dumps",
