@@ -173,7 +173,13 @@ function globalCollector(
     const originalTrigger = pkg.prototype.trigger;
     try {
       pkg.prototype.trigger = function (...args: any) {
-        notificationLogger.addContent({ message: "test", time: new Date() });
+        console.log(args);
+        notificationLogger.addContent({
+          channel: args[0],
+          name: args[1],
+          data: args[2],
+          time: new Date(),
+        });
         return originalTrigger.apply(this, args);
       };
     } catch (e) {

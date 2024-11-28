@@ -31,9 +31,11 @@ RedisWatcher.addContent = async function (content: any) {
 
 RedisWatcher.getIndex = async (req: Request, res: Response) => {
   try {
-    let data = await connection("observatory_entries").where({
-      type: "redis",
-    });
+    let data = await connection("observatory_entries")
+      .where({
+        type: "redis",
+      })
+      .orderBy("created_at", "desc");
     return res.status(200).json(data);
   } catch (e) {
     console.error(e);

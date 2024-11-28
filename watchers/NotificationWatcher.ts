@@ -3,6 +3,7 @@
 import connection from "../database/connection";
 import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
+import { Request, Response } from "express";
 
 const NotificationWatcher = Object.create(Watcher);
 
@@ -28,7 +29,30 @@ NotificationWatcher.addContent = async function (content: any) {
   }
 };
 
-NotificationWatcher.getIndex = async () =>
-  await connection("observatory_entries").where({ type: "notification" });
+NotificationWatcher.getIndex = async (req: Request, res: Response) => {
+  try {
+    let data = await connection("observatory_entries")
+      .where({
+        type: "notification",
+      })
+      .orderBy("created_at", "desc");
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error getting index for NotificationWatcher", error);
+  }
+};
+
+NotificationWatcher.getView = async (req: Request, res: Response) => {
+  try {
+    let data = await connection("observatory_entries")
+      .where({
+        uuid: req.params.notificationId,
+      })
+      .first();
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error getting view for NotificationWatcher", error);
+  }
+};
 
 export default NotificationWatcher;

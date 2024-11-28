@@ -14,8 +14,12 @@ import MailPreview, {
 import ExceptionIndex from "./screens/exception/ExceptionsIndex";
 import ExceptionPreview from "./screens/exception/ExceptionPreview";
 import DumpsIndex from "./screens/dump/DumpsIndex";
-import NotificationsIndex from "./screens/notification/NotificationsIndex";
-import NotificationPreview from "./screens/notification/NotificationPreview";
+import NotificationsIndex, {
+  loader as NotificationsIndexLoader,
+} from "./screens/notification/NotificationsIndex";
+import NotificationPreview, {
+  loader as NotificationsViewLoader,
+} from "./screens/notification/NotificationPreview";
 import JobIndex from "./screens/job/JobsIndex";
 import JobPreview from "./screens/job/JobPreview";
 import BatchesIndex from "./screens/batch/BatchesIndex";
@@ -88,12 +92,14 @@ const router = createBrowserRouter([
         element: <LogIndex />,
       },
       {
-        path: "/notifications/:id",
+        path: "/notifications/:notificationId",
         element: <NotificationPreview />,
+        loader: NotificationsViewLoader,
       },
       {
         path: "/notifications",
         element: <NotificationsIndex />,
+        loader: NotificationsIndexLoader,
       },
       {
         path: "/jobs/:id",

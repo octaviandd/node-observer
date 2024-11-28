@@ -50,7 +50,6 @@ MailWatcher.getView = async (req: Request, res: Response) => {
         uuid: req.params.mailId,
       })
       .first();
-    console.log(data);
     return res.status(200).json(data);
   } catch (e) {
     console.error(e);

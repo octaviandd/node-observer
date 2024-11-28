@@ -5,6 +5,7 @@ import RequestWatcher from "../watchers/RequestWatcher";
 import MailWatcher from "../watchers/MailWatcher";
 import RedisWatcher from "../watchers/RedisWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
+import NotificationWatcher from "../watchers/NotificationWatcher";
 
 const router = Router();
 
@@ -52,8 +53,15 @@ router.get("/schedules", (req, res) => {
   scheduleController.getIndex(req, res);
 });
 router.get("/schedules/:scheduleId", (req, res) => {
-  console.log("Schedule ID", req.params.scheduleId);
   scheduleController.getView(req, res);
+});
+
+const notificationController = Object.create(NotificationWatcher);
+router.get("/notifications", (req, res) => {
+  notificationController.getIndex(req, res);
+});
+router.get("/notifications/:notificationId", (req, res) => {
+  notificationController.getView(req, res);
 });
 
 // Exception entries...
@@ -78,14 +86,6 @@ router.post("/logs", (req, res) => {
 });
 router.get("/logs/:observatoryEntryId", (req, res) => {
   // Handle logs show
-});
-
-// Notifications entries...
-router.post("/notifications", (req, res) => {
-  // Handle notifications index
-});
-router.get("/notifications/:observatoryEntryId", (req, res) => {
-  // Handle notifications show
 });
 
 // Queue entries...
