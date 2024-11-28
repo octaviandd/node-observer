@@ -22,10 +22,14 @@ import MailWatcher from "../watchers/MailWatcher";
 import RedisWatcher from "../watchers/RedisWatcher";
 import CacheWatcher from "../watchers/CacheWatcher";
 import CommandWatcher from "../watchers/CommandWatcher";
+import ScheduleWatcher from "../watchers/ScheduleWatcher";
+
+import { JobCallback } from "node-schedule";
 
 const eventLogger = Object.create(EventsWatcher);
 const requestLogger = Object.create(RequestWatcher);
 const jobLogger = Object.create(JobWatcher);
+const scheduleLogger = Object.create(ScheduleWatcher);
 const exceptionLogger = Object.create(ExceptionWatcher);
 const notificationLogger = Object.create(NotificationWatcher);
 const mailLogger = Object.create(MailWatcher);
@@ -176,8 +180,6 @@ function globalCollector(
       console.log(e);
     }
   } else if (packageName === "nodemailer") {
-    console.log(pkg);
-
     const originalTrigger = pkg.createTransport;
 
     try {
@@ -258,18 +260,62 @@ function globalCollector(
 
     try {
       pkg.scheduleJob = function (...args: any) {
-        const job = args[1];
-        const originalJob = job;
+        let funcIndex = args.findIndex((arg: any) => arg instanceof Function);
+        const schedule = args[funcIndex];
 
-        args[1] = function () {
-          jobLogger.addContent({ job: originalJob.name, time: new Date() });
-          return originalJob();
+        scheduleLogger.addContent({
+          name: args.length > 2 ? args[0] : "",
+          info: args.length > 2 ? args[1] : args[0],
+          time: new Date(),
+          mode: "set",
+        });
+
+        args[funcIndex] = function (...innerArgs: any) {
+          scheduleLogger.addContent({
+            name: args.length > 2 ? args[0] : "",
+            info: args.length > 2 ? args[1] : args[0],
+            time: new Date(),
+            mode: "run",
+          });
+          return schedule.apply(this, innerArgs);
         };
 
         return originalScheduleJob.apply(this, args);
       };
     } catch (e) {
       console.log(e);
+    }
+
+    let originalCancelJob = pkg.cancelJob;
+    try {
+      pkg.cancelJob = function (...args: any) {
+        scheduleLogger.addContent({
+          name: args.length > 2 ? args[0] : "",
+          info: args.length > 2 ? args[1] : args[0],
+          time: new Date(),
+          mode: "cancel",
+        });
+
+        return originalCancelJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    let originalRescheduleJob = pkg.rescheduleJob;
+    try {
+      pkg.rescheduleJob = function (...args: any) {
+        scheduleLogger.addContent({
+          name: args.length > 2 ? args[0] : "",
+          info: args.length > 2 ? args[1] : args[0],
+          time: new Date(),
+          mode: "reschedule",
+        });
+
+        return originalRescheduleJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
     }
   } else if (packageName === "node-cache") {
     const originalSet = pkg.prototype.set;
@@ -310,6 +356,10 @@ function globalCollector(
         value: args[1],
         time: new Date(),
         type: "set",
+        host: this.options.host,
+        db: this.options.db,
+        family: this.options.family,
+        port: this.options.port,
       });
 
       return originalSet.apply(this, args);
@@ -318,9 +368,12 @@ function globalCollector(
     pkg.prototype.get = function (...args: any) {
       redisLogger.addContent({
         key: args[0],
-        value: args[1],
         time: new Date(),
         type: "get",
+        host: this.options.host,
+        db: this.options.db,
+        family: this.options.family,
+        port: this.options.port,
       });
 
       return originalGet.apply(this, args);

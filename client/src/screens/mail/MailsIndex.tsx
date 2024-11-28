@@ -42,7 +42,6 @@ export async function loader() {
 
 export default function MailsIndex() {
   const { mails } = useLoaderData() as { mails: MailsResponse[] };
-  console.log(mails);
 
   return (
     <div className="flex flex-col">

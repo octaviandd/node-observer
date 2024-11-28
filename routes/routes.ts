@@ -3,6 +3,8 @@
 import { Router } from "express";
 import RequestWatcher from "../watchers/RequestWatcher";
 import MailWatcher from "../watchers/MailWatcher";
+import RedisWatcher from "../watchers/RedisWatcher";
+import ScheduleWatcher from "../watchers/ScheduleWatcher";
 
 const router = Router();
 
@@ -33,6 +35,25 @@ const mailController = Object.create(MailWatcher);
 router.get("/mails", (req, res) => mailController.getIndex(req, res));
 router.get("/mails/:mailId", (req, res) => {
   mailController.getView(req, res);
+});
+
+// Redis Commands entries...
+const redisController = Object.create(RedisWatcher);
+router.get("/redis", (req, res) => {
+  redisController.getIndex(req, res);
+});
+router.get("/redis/:redisRowId", (req, res) => {
+  redisController.getView(req, res);
+});
+
+const scheduleController = Object.create(ScheduleWatcher);
+// Scheduled Commands entries...
+router.get("/schedules", (req, res) => {
+  scheduleController.getIndex(req, res);
+});
+router.get("/schedules/:scheduleId", (req, res) => {
+  console.log("Schedule ID", req.params.scheduleId);
+  scheduleController.getView(req, res);
 });
 
 // Exception entries...
@@ -145,14 +166,6 @@ router.post("/schedule", (req, res) => {
 });
 router.get("/schedule/:observatoryEntryId", (req, res) => {
   // Handle schedule show
-});
-
-// Redis Commands entries...
-router.post("/redis", (req, res) => {
-  // Handle redis index
-});
-router.get("/redis/:observatoryEntryId", (req, res) => {
-  // Handle redis show
 });
 
 // Client Requests entries...

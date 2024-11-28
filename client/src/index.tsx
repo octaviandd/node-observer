@@ -36,10 +36,18 @@ import RequestPreview, {
 } from "./screens/request/RequestPreview";
 import CommandsIndex from "./screens/command/CommandsIndex";
 import CommandPreview from "./screens/command/CommandPreview";
-import ScheduleIndex from "./screens/schedule/SchedulesIndex";
-import SchedulePreview from "./screens/schedule/SchedulePreview";
-import RedisIndex from "./screens/redis/RedisIndex";
-import RedisPreview from "./screens/redis/RedisPreview";
+import ScheduleIndex, {
+  loader as ScheduleIndexLoader,
+} from "./screens/schedule/SchedulesIndex";
+import SchedulePreview, {
+  loader as ScheduleViewLoader,
+} from "./screens/schedule/SchedulePreview";
+import RedisIndex, {
+  loader as RedisIndexLoader,
+} from "./screens/redis/RedisIndex";
+import RedisPreview, {
+  loader as RedisViewLoader,
+} from "./screens/redis/RedisPreview";
 import LogIndex from "./screens/log/LogsIndex";
 import LogPreview from "./screens/log/LogPreview";
 
@@ -154,20 +162,24 @@ const router = createBrowserRouter([
         element: <CommandsIndex />,
       },
       {
-        path: "/schedule/:id",
+        path: "/schedules/:scheduleId",
         element: <SchedulePreview />,
+        loader: ScheduleViewLoader,
       },
       {
-        path: "/schedule",
+        path: "/schedules",
         element: <ScheduleIndex />,
+        loader: ScheduleIndexLoader,
       },
       {
-        path: "/redis/:id",
+        path: "/redis/:redisRowId",
         element: <RedisPreview />,
+        loader: RedisViewLoader,
       },
       {
         path: "/redis",
         element: <RedisIndex />,
+        loader: RedisIndexLoader,
       },
       // {
       //   path: '/monitored-tags',

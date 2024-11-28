@@ -3,6 +3,7 @@
 import connection from "../database/connection";
 import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
+import { Request, Response } from "express";
 
 const RedisWatcher = Object.create(Watcher);
 
@@ -28,7 +29,28 @@ RedisWatcher.addContent = async function (content: any) {
   }
 };
 
-RedisWatcher.getIndex = async () =>
-  await connection("observatory_entries").where({ type: "redis" });
+RedisWatcher.getIndex = async (req: Request, res: Response) => {
+  try {
+    let data = await connection("observatory_entries").where({
+      type: "redis",
+    });
+    return res.status(200).json(data);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+RedisWatcher.getView = async (req: Request, res: Response) => {
+  try {
+    let data = await connection("observatory_entries")
+      .where({
+        uuid: req.params.redisRowId,
+      })
+      .first();
+    return res.status(200).json(data);
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 export default RedisWatcher;

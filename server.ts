@@ -63,9 +63,11 @@ app.get("/", async (req, res) => {
   redis.set("test", "test");
   redis.get("test");
 
-  schedule.scheduleJob("34 * * * *", function () {
+  schedule.scheduleJob("life-universe-everything", "11 * * * *", function () {
     console.log("The answer to life, the universe, and everything!");
   });
+
+  schedule.cancelJob("life-universe-everything");
 
   pusher.trigger("my-channel", "my-event", {
     message: "hello world",
