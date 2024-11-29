@@ -1,5 +1,11 @@
 /** @format */
 
+import { Connection } from "./../node_modules/mysql2/promise.d";
+/** @format */
+
+import { QueryBuilder } from "./../node_modules/knex/types/index.d";
+/** @format */
+
 declare global {
   namespace Express {
     interface Request {
@@ -153,6 +159,7 @@ function isPackageInstalled(npmPackage: string) {
 
 interface GlobalCollectorOptions {
   log?: boolean;
+  connection?: any;
 }
 
 function globalCollector(
@@ -194,7 +201,6 @@ function globalCollector(
     const originalTrigger = pkg.prototype.trigger;
     try {
       pkg.prototype.trigger = function (...args: any) {
-        console.log(args);
         notificationLogger.addContent({
           channel: args[0],
           name: args[1],
@@ -405,6 +411,74 @@ function globalCollector(
 
       return originalGet.apply(this, args);
     };
+  } else if (packageName === "knex") {
+    if (options.connection) {
+      options.connection.on("query", (query: any) => {
+        console.log(query);
+        if (query.sql.includes("insert into `observatory_entries`")) {
+          return;
+        }
+
+        try {
+          queryLogger.addContent({
+            query: query.sql,
+            time: new Date(),
+            host: options.connection.client.config.connection.host,
+            database: options.connection.client.config.connection.database,
+            user: options.connection.client.config.connection.user,
+            port: options.connection.client.config.connection.port,
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
+  } else if (packageName === "mysql2") {
+    // let originalCreateConnection = pkg.createQuery;
+    // let originalRaw = pkg.raw;
+    // let originalQuery: ((...args: any[]) => Promise<any>) | undefined =
+    //   undefined;
+    // console.log(options.connection);
+    // if (options.connection) {
+    //   originalQuery = options.connection.query;
+    //   options.connection.query = function (...args: any) {
+    //     console.log(args);
+    //     queryLogger.addContent({
+    //       query: args[0],
+    //       time: new Date(),
+    //       host: this.config.host,
+    //       database: this.config.database,
+    //     });
+    //     if (originalQuery) {
+    //       return originalQuery.apply(options.connection, args);
+    //     }
+    //     throw new Error("originalQuery is undefined");
+    //   };
+    // }
+    // pkg.raw = function (...args: any) {
+    //   console.log("raw");
+    //   queryLogger.addContent({
+    //     query: args[0],
+    //     time: new Date(),
+    //     host: this.config.host,
+    //     database: this.config.database,
+    //     user: this.config.user,
+    //     port: this.config.port,
+    //   });
+    //   return originalRaw.apply(this, args);
+    // };
+    // pkg.createQuery = function (...args: any) {
+    //   console.log("query");
+    //   queryLogger.addContent({
+    //     query: args[0],
+    //     time: new Date(),
+    //     host: this.config.host,
+    //     database: this.config.database,
+    //     user: this.config.user,
+    //     port: this.config.port,
+    //   });
+    //   return originalCreateConnection.apply(this, args);
+    // };
   }
 
   if (typeof callback === "function") {

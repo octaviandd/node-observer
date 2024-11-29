@@ -18,6 +18,7 @@ import { Command } from "commander";
 import knex from "knex";
 import cors from "cors";
 import connection from "./database/connection";
+import mysql2 from "mysql2";
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -27,8 +28,8 @@ globalCollector("node-schedule", { log: true }, (pkg: any) => {});
 globalCollector("node-cache", { log: true }, (pkg: any) => {});
 globalCollector("ioredis", { log: true }, (pkg: any) => {});
 globalCollector("commander", { log: true }, (pkg: any) => {});
-globalCollector("knex", { log: true }, (pkg: any) => {});
-globalCollector("mysql2", { log: true }, (pkg: any) => {});
+globalCollector("knex", { log: true, connection }, (pkg: any) => {});
+globalCollector("mysql2", { log: true, connection }, (pkg: any) => {});
 globalCollector("events", { log: true }, (pkg: any) => {});
 
 const pusher = new Pusher({
@@ -81,9 +82,12 @@ app.get("/", async (req, res) => {
     message: "hello world",
   });
 
-  setTimeout(() => {
-    throw new Error("This is an uncaught exception!");
-  }, 1000);
+  // setTimeout(() => {
+  //   throw new Error("This is an uncaught exception!");
+  // }, 1000);
+
+  let data = await connection("observatory_entries");
+  console.log(data);
 
   const eventEmiter = new EventEmitter();
   eventEmiter.emit("test");
