@@ -166,7 +166,7 @@ router.post("/monitored-tags/delete", (req, res) => {
 });
 
 // Toggle Recording...
-router.post("/toggle-recording", (req, res) => {
+router.get("/toggle-recording", (req, res) => {
   config.observatoryPaused = !config.observatoryPaused;
 
   return res.status(200).json({
