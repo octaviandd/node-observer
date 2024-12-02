@@ -5,54 +5,53 @@ import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
 
-const NotificationWatcher = Object.create(Watcher);
+class NotificationWatcher implements Watcher {
+  type: string;
 
-NotificationWatcher.type = "notification";
-NotificationWatcher.should_display_on_index = true;
-NotificationWatcher.content = {};
-
-NotificationWatcher.addContent = async function (content: any) {
-  const newEntry = {
-    uuid: uuidv4(),
-    batch_id: uuidv4(),
-    family_hash: uuidv4(),
-    type: this.type,
-    should_display_on_index: true,
-    content: JSON.stringify(content),
-  };
-
-  try {
-    const result = await connection("observatory_entries").insert(newEntry);
-    return result;
-  } catch (error) {
-    console.error("Error adding content to NotificationWatcher", error);
+  constructor() {
+    this.type = "notification";
   }
-};
 
-NotificationWatcher.getIndex = async (req: Request, res: Response) => {
-  try {
-    let data = await connection("observatory_entries")
-      .where({
+  public async addContent(content: any): Promise<void> {
+    const newEntry = {
+      uuid: uuidv4(),
+      batch_id: uuidv4(),
+      family_hash: uuidv4(),
+      type: this.type,
+      should_display_on_index: true,
+      content: JSON.stringify(content),
+    };
+
+    try {
+      await connection("observatory_entries").insert(newEntry);
+    } catch (error) {
+      console.error("Error adding content to NotificationWatcher", error);
+    }
+  }
+
+  public async getIndex(req: Request, res: Response) {
+    try {
+      const data = await connection("observatory_entries").where({
         type: "notification",
-      })
-      .orderBy("created_at", "desc");
-    return res.status(200).json(data);
-  } catch (error) {
-    console.error("Error getting index for NotificationWatcher", error);
+      });
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error("Error getting index from NotificationWatcher", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-};
 
-NotificationWatcher.getView = async (req: Request, res: Response) => {
-  try {
-    let data = await connection("observatory_entries")
-      .where({
-        uuid: req.params.notificationId,
-      })
-      .first();
-    return res.status(200).json(data);
-  } catch (error) {
-    console.error("Error getting view for NotificationWatcher", error);
+  public async getView(req: Request, res: Response) {
+    try {
+      const data = await connection("observatory_entries")
+        .where({ uuid: req.params.notificationId })
+        .first();
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error("Error getting view from NotificationWatcher", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-};
+}
 
 export default NotificationWatcher;

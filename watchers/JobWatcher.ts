@@ -3,32 +3,54 @@
 import connection from "../database/connection";
 import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
+import { Request, Response } from "express";
 
-const JobWatcher = Object.create(Watcher);
+class JobWatcher implements Watcher {
+  type: string;
 
-JobWatcher.type = "job";
-JobWatcher.should_display_on_index = true;
-JobWatcher.content = {};
-
-JobWatcher.addContent = async function (content: any) {
-  const newEntry = {
-    uuid: uuidv4(),
-    batch_id: uuidv4(),
-    family_hash: uuidv4(),
-    type: this.type,
-    should_display_on_index: true,
-    content: JSON.stringify(content),
-  };
-
-  try {
-    const result = await connection("observatory_entries").insert(newEntry);
-    return result;
-  } catch (error) {
-    console.error("Error adding content to JobWatcher", error);
+  constructor() {
+    this.type = "job";
   }
-};
 
-JobWatcher.getIndex = async () =>
-  await connection("observatory_entries").where({ type: "job" });
+  public async addContent(content: any): Promise<void> {
+    const newEntry = {
+      uuid: uuidv4(),
+      batch_id: uuidv4(),
+      family_hash: uuidv4(),
+      type: this.type,
+      content: JSON.stringify(content),
+    };
+
+    try {
+      await connection("observatory_entries").insert(newEntry);
+    } catch (error) {
+      console.error("Error adding content to JobWatcher", error);
+    }
+  }
+
+  public async getIndex(req: Request, res: Response) {
+    try {
+      const data = await connection("observatory_entries").where({
+        type: "job",
+      });
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error("Error getting index from JobWatcher", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  public async getView(req: Request, res: Response) {
+    try {
+      const data = await connection("observatory_entries")
+        .where({ uuid: req.params.jobId })
+        .first();
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error("Error getting view from JobWatcher", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+}
 
 export default JobWatcher;

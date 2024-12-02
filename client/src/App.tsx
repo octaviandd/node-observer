@@ -138,7 +138,7 @@ export default function App() {
                 <span>Requests</span>
               </Link>
             </li>
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link
                 to="/commands"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
@@ -158,7 +158,7 @@ export default function App() {
                 </svg>
                 <span>Commands</span>
               </Link>
-            </li>
+            </li> */}
             <li className="nav-item">
               <Link
                 to="/schedules"
@@ -180,7 +180,7 @@ export default function App() {
                 <span>Schedule</span>
               </Link>
             </li>
-            <li className="nav-item">
+            <li className="nav-item mt-3">
               <Link
                 to="/jobs"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
@@ -198,7 +198,7 @@ export default function App() {
               </Link>
             </li>
 
-            <li className="nav-item mt-3">
+            {/* <li className="nav-item mt-3">
               <Link
                 to="/batches"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
@@ -218,7 +218,7 @@ export default function App() {
                 </svg>
                 <span>Batches</span>
               </Link>
-            </li>
+            </li> */}
             <li className="nav-item">
               <Link
                 to="/cache"
@@ -266,7 +266,7 @@ export default function App() {
                 <span>Dumps</span>
               </Link>
             </li>
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link
                 to="/events"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
@@ -282,7 +282,7 @@ export default function App() {
                 </svg>
                 <span>Events</span>
               </Link>
-            </li>
+            </li> */}
             <li className="nav-item">
               <Link
                 to="/exceptions"
@@ -365,7 +365,7 @@ export default function App() {
                 <span>Mail</span>
               </Link>
             </li>
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link
                 to="/models"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
@@ -385,7 +385,7 @@ export default function App() {
                 </svg>
                 <span>Models</span>
               </Link>
-            </li>
+            </li> */}
             <li className="nav-item">
               <Link
                 to="/notifications"
@@ -446,7 +446,7 @@ export default function App() {
                 <span>Redis</span>
               </Link>
             </li>
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <Link
                 to="/views"
                 className="px-3 py-2 rounded-md flex items-center gap-x-2 hover:bg-[#e5e7eb] transition-bg duration-300 ease-in-out"
@@ -466,7 +466,7 @@ export default function App() {
                 </svg>
                 <span>Views</span>
               </Link>
-            </li>
+            </li> */}
           </ul>
         </div>
         <div className="col-span-10 px-4">

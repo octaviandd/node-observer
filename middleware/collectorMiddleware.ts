@@ -1,11 +1,4 @@
 /** @format */
-
-import { Connection } from "./../node_modules/mysql2/promise.d";
-/** @format */
-
-import { QueryBuilder } from "./../node_modules/knex/types/index.d";
-/** @format */
-
 declare global {
   namespace Express {
     interface Request {
@@ -30,19 +23,21 @@ import CacheWatcher from "../watchers/CacheWatcher";
 import CommandWatcher from "../watchers/CommandWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
+import LogWatcher from "../watchers/LogWatcher";
 
-const eventLogger = Object.create(EventsWatcher);
-const requestLogger = Object.create(RequestWatcher);
-const jobLogger = Object.create(JobWatcher);
-const scheduleLogger = Object.create(ScheduleWatcher);
-const exceptionLogger = Object.create(ExceptionWatcher);
-const notificationLogger = Object.create(NotificationWatcher);
-const mailLogger = Object.create(MailWatcher);
-const redisLogger = Object.create(RedisWatcher);
-const cacheLogger = Object.create(CacheWatcher);
-const commandLogger = Object.create(CommandWatcher);
-const queryLogger = Object.create(QueryWatcher);
-const httpClientLogger = Object.create(HTTPClientWatcher);
+const eventLogger = new EventsWatcher();
+const requestLogger = new RequestWatcher();
+const jobLogger = new JobWatcher();
+const scheduleLogger = new ScheduleWatcher();
+const exceptionLogger = new ExceptionWatcher();
+const notificationLogger = new NotificationWatcher();
+const mailLogger = new MailWatcher();
+const redisLogger = new RedisWatcher();
+const cacheLogger = new CacheWatcher();
+const commandLogger = new CommandWatcher();
+const queryLogger = new QueryWatcher();
+const httpClientLogger = new HTTPClientWatcher();
+const logLogger = new LogWatcher();
 
 type LoggerType =
   | "event"
@@ -132,7 +127,7 @@ async function withObserver<T extends LoggerType>(
       break;
     case "query":
       let { query } = params as MiddleWareParams<"query">;
-      QueryWatcher.addContent({ query, time });
+      // QueryWatcher.addContent({ query, time });
       callback();
       break;
     case "mail":
@@ -213,6 +208,33 @@ function globalCollector(
     } catch (e) {
       console.log(e);
     }
+  } else if (packageName === "events") {
+    // const originalEmit = pkg.EventEmitter.prototype.emit;
+    // const originalOn = pkg.EventEmitter.prototype.on;
+    // try {
+    //   pkg.EventEmitter.prototype.emit = function (...args: any) {
+    //     eventLogger.addContent({
+    //       eventName: args[0],
+    //       props: args[1],
+    //       time: new Date(),
+    //     });
+    //     return originalEmit.apply(this, args);
+    //   };
+    // } catch (e) {
+    //   console.log(e);
+    // }
+    // try {
+    //   pkg.EventEmitter.prototype.on = function (...args: any) {
+    //     eventLogger.addContent({
+    //       eventName: args[0],
+    //       props: args[1],
+    //       time: new Date(),
+    //     });
+    //     return originalOn.apply(this, args);
+    //   };
+    // } catch (e) {
+    //   console.log(e);
+    // }
   } else if (packageName === "https") {
     const originalRequest = pkg.request;
     const originalGet = pkg.get;
@@ -419,6 +441,35 @@ function globalCollector(
     } catch (e) {
       console.log(e);
     }
+  } else if (packageName === "bull") {
+    const originalCreate = pkg.Job.create;
+    const originalRemove = pkg.Job.remove;
+
+    try {
+      pkg.Job.create = function (...args: any) {
+        jobLogger.addContent({
+          job: args[0],
+          time: new Date(),
+        });
+
+        return originalCreate.apply(this, args);
+      };
+    } catch (e) {
+      console.log(e);
+    }
+
+    try {
+      pkg.Job.remove = function (...args: any) {
+        jobLogger.addContent({
+          job: args[0],
+          time: new Date(),
+        });
+
+        return originalRemove.apply(this, args);
+      };
+    } catch (e) {
+      console.log(e);
+    }
   } else if (packageName === "node-schedule") {
     const originalScheduleJob = pkg.scheduleJob;
 
@@ -477,6 +528,52 @@ function globalCollector(
         });
 
         return originalRescheduleJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+  } else if (packageName === "winston") {
+    const originalError = pkg.error;
+    const originalWarn = pkg.warn;
+    const originalInfo = pkg.info;
+    const originalLog = pkg.log;
+
+    try {
+      pkg.error = function (...args: any) {
+        logLogger.addContent({
+          level: "error",
+          message: args[0],
+          time: new Date(),
+        });
+        return originalError.apply(this, args);
+      };
+
+      pkg.warn = function (...args: any) {
+        logLogger.addContent({
+          level: "warn",
+          message: args[0],
+          time: new Date(),
+        });
+        return originalWarn.apply(this, args);
+      };
+
+      pkg.info = function (...args: any) {
+        console.log("info");
+        logLogger.addContent({
+          level: "info",
+          message: args[0],
+          time: new Date(),
+        });
+        return originalInfo.apply(this, args);
+      };
+
+      pkg.log = function (...args: any) {
+        logLogger.addContent({
+          level: "log",
+          message: args[0],
+          time: new Date(),
+        });
+        return originalLog.apply(this, args);
       };
     } catch (e) {
       console.error(e);

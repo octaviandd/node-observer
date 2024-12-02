@@ -3,32 +3,54 @@
 import connection from "../database/connection";
 import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
+import { Request, Response } from "express";
 
-const EventWatcher = Object.create(Watcher);
+class EventWatcher implements Watcher {
+  type: string;
 
-EventWatcher.type = "event";
-EventWatcher.should_display_on_index = true;
-EventWatcher.content = {};
-
-EventWatcher.addContent = async function (content: any) {
-  const newEntry = {
-    uuid: uuidv4(),
-    batch_id: uuidv4(),
-    family_hash: uuidv4(),
-    type: this.type,
-    should_display_on_index: true,
-    content,
-  };
-
-  try {
-    const result = await connection("observatory_entries").insert(newEntry);
-    return result;
-  } catch (error) {
-    console.error("Error adding content to EventWatcher", error);
+  constructor() {
+    this.type = "event";
   }
-};
 
-EventWatcher.getIndex = async () =>
-  await connection("observatory_entries").where({ type: "event" });
+  public async addContent(content: any): Promise<void> {
+    const newEntry = {
+      uuid: uuidv4(),
+      batch_id: uuidv4(),
+      family_hash: uuidv4(),
+      type: this.type,
+      should_display_on_index: true,
+      content,
+    };
 
+    try {
+      await connection("observatory_entries").insert(newEntry);
+    } catch (error) {
+      console.error("Error adding content to EventWatcher", error);
+    }
+  }
+
+  public async getIndex(req: Request, res: Response): Promise<Response> {
+    try {
+      const data = await connection("observatory_entries").where({
+        type: "event",
+      });
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error("Error getting index from EventWatcher", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+
+  public async getView(req: Request, res: Response): Promise<Response> {
+    try {
+      const data = await connection("observatory_entries")
+        .where({ uuid: req.params.eventId })
+        .first();
+      return res.status(200).json(data);
+    } catch (error) {
+      console.error("Error getting view from EventWatcher", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+}
 export default EventWatcher;

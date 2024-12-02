@@ -1,22 +1,12 @@
-import { Request, Response } from 'express';
+/** @format */
 
-const Watcher = {
-  index: (res: Response, req: Request) => {
-    return res.status(200).json({ message: 'Index' });
-  },
-  view: (res: Response, req: Request) => {
-    return res.status(200).json({ message: 'View' });
-  },
-  status: () => {
-    if (!(global as any).config.observatoryEnabled) {
-      return 'disabled';
-    } else if (!(global as any).config.observatoryPaused) {
-      return 'paused';
-    }
+import { Request, Response } from "express";
 
-    return 'enabled'
-  }
+interface Watcher {
+  type: string;
+  getIndex(req: Request, res: Response): Promise<Response>;
+  getView(req: Request, res: Response): Promise<Response>;
+  addContent(content: unknown): void;
 }
-
 
 export default Watcher;

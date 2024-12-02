@@ -21,6 +21,9 @@ import connection from "./database/connection";
 import mysql2 from "mysql2";
 import http from "http";
 import https from "https";
+import { createLogger, format, transports } from "winston";
+import Queue from "bull";
+import Agenda from "agenda";
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -35,6 +38,23 @@ globalCollector("mysql2", { log: true, connection }, (pkg: any) => {});
 globalCollector("events", { log: true }, (pkg: any) => {});
 globalCollector("http", { log: true }, (pkg: any) => {});
 globalCollector("https", { log: true }, (pkg: any) => {});
+globalCollector("winston", { log: true }, (pkg: any) => {});
+globalCollector("bull", { log: true }, (pkg: any) => {});
+globalCollector("agenda", { log: true }, (pkg: any) => {});
+
+const logger = createLogger({
+  level: "info",
+  format: format.combine(
+    format.timestamp(),
+    format.printf(
+      ({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`
+    )
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: "combined.log" }),
+  ],
+});
 
 const pusher = new Pusher({
   appId: "1900516",
@@ -57,38 +77,48 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
-// app.use(requestLogger);
 
 app.use("/observatory-api/data", routes);
 
-// let originalError = new Error();
-// console.log(originalError);
-
-// Error.captureStackTrace = function (error: Error, constructorOpt?: Function) {
-//   originalError.captureStackTrace(error, constructorOpt);
-// }
-
 // API routes
 app.get("/", async (req, res) => {
+  logger.info("Hello World");
+  logger.warn("Warning");
   https
     .get("https://jsonplaceholder.typicode.com/todos/1", (resp) => {
-      resp.on("data", () => {
-        console.log("hit");
-      });
-
-      resp.on("end", () => {
-        console.log("HTTPS GET Response finished");
-      });
+      resp.on("data", () => {});
+      resp.on("end", () => {});
     })
-    .on("error", (err) => {
-      console.log("Error: " + err.message);
-    });
+    .on("error", (err) => {});
 
   res.send("Hello World");
 
   myCache.set("test", "test");
   redis.set("test", "test");
   redis.get("test");
+
+  const emailQueue = new Queue("emailQueue");
+
+  emailQueue.add({
+    email: "user@example.com",
+    subject: "Welcome!",
+    body: "Thanks for signing up!",
+  });
+
+  emailQueue.process(async (job) => {
+    console.log("Sending email to:", job.data.email);
+    // Simulate sending email
+    await sendEmail(job.data.email, job.data.subject, job.data.body);
+  });
+
+  function sendEmail(email: string, subject: string, body: string) {
+    return new Promise((resolve) =>
+      setTimeout(() => {
+        console.log(`Email sent to ${email}`);
+        resolve(void 0);
+      }, 1000)
+    );
+  }
 
   schedule.scheduleJob("life-universe-everything", "11 * * * *", function () {
     console.log("The answer to life, the universe, and everything!");

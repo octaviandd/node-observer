@@ -80,6 +80,11 @@ const router = createBrowserRouter([
     errorElement: <div>404</div>,
     children: [
       {
+        index: true,
+        element: <RequestsIndex />,
+        loader: RequestIndexLoader,
+      },
+      {
         path: "/mails/:mailId",
         element: <MailPreview />,
         loader: MailViewLoader,
@@ -234,13 +239,6 @@ const router = createBrowserRouter([
       //   element: <ViewsIndex />,
       // },
       // {
-      //   path: '/client-requests/:id',
-      //   element: <ClientRequestPreview />,
-      // },
-      // {
-      //   path: '/client-requests',
-      //   element: <ClientRequestsIndex />,
-      // },
     ],
   },
 ]);
