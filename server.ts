@@ -19,6 +19,8 @@ import knex from "knex";
 import cors from "cors";
 import connection from "./database/connection";
 import mysql2 from "mysql2";
+import http from "http";
+import https from "https";
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -31,6 +33,8 @@ globalCollector("commander", { log: true }, (pkg: any) => {});
 globalCollector("knex", { log: true, connection }, (pkg: any) => {});
 globalCollector("mysql2", { log: true, connection }, (pkg: any) => {});
 globalCollector("events", { log: true }, (pkg: any) => {});
+globalCollector("http", { log: true }, (pkg: any) => {});
+globalCollector("https", { log: true }, (pkg: any) => {});
 
 const pusher = new Pusher({
   appId: "1900516",
@@ -66,6 +70,20 @@ app.use("/observatory-api/data", routes);
 
 // API routes
 app.get("/", async (req, res) => {
+  https
+    .get("https://jsonplaceholder.typicode.com/todos/1", (resp) => {
+      resp.on("data", () => {
+        console.log("hit");
+      });
+
+      resp.on("end", () => {
+        console.log("HTTPS GET Response finished");
+      });
+    })
+    .on("error", (err) => {
+      console.log("Error: " + err.message);
+    });
+
   res.send("Hello World");
 
   myCache.set("test", "test");
@@ -86,7 +104,7 @@ app.get("/", async (req, res) => {
   //   throw new Error("This is an uncaught exception!");
   // }, 1000);
 
-  let data = await connection("observatory_entries");
+  let data = await connection("migrations");
   console.log(data);
 
   const eventEmiter = new EventEmitter();
@@ -125,11 +143,6 @@ app.get("/", async (req, res) => {
       }
     });
   });
-});
-
-app.use((req, res, next) => {
-  console.log(req.hostname, req.headers);
-  next();
 });
 
 const PORT = 9999;

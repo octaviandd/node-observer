@@ -29,6 +29,7 @@ import RedisWatcher from "../watchers/RedisWatcher";
 import CacheWatcher from "../watchers/CacheWatcher";
 import CommandWatcher from "../watchers/CommandWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
+import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 
 const eventLogger = Object.create(EventsWatcher);
 const requestLogger = Object.create(RequestWatcher);
@@ -41,6 +42,7 @@ const redisLogger = Object.create(RedisWatcher);
 const cacheLogger = Object.create(CacheWatcher);
 const commandLogger = Object.create(CommandWatcher);
 const queryLogger = Object.create(QueryWatcher);
+const httpClientLogger = Object.create(HTTPClientWatcher);
 
 type LoggerType =
   | "event"
@@ -167,7 +169,6 @@ function globalCollector(
   options: GlobalCollectorOptions = {},
   callback: any
 ) {
-  console.log(packageName);
   if (packageName === "exception") {
     process.on("uncaughtException", (error: Error) => {
       exceptionLogger.addContent({
@@ -208,6 +209,136 @@ function globalCollector(
           time: new Date(),
         });
         return originalTrigger.apply(this, args);
+      };
+    } catch (e) {
+      console.log(e);
+    }
+  } else if (packageName === "https") {
+    const originalRequest = pkg.request;
+    const originalGet = pkg.get;
+
+    try {
+      pkg.request = function (...args: any) {
+        const req = originalRequest.apply(this, args);
+
+        req.on("response", (res: any) => {
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.path,
+            timestamp: new Date(),
+            status: res.statusCode,
+            duration: res.elapsedTime,
+            ipAddress: req.ip,
+            memoryUsage: process.memoryUsage(),
+            middleware: "https",
+            controllerAction: "https",
+            hostname: req.hostname,
+            payload: req.body,
+            session: req.session ? req.session.id : "none",
+            response: res.locals || "none",
+            headers: req.headers,
+            body: req.body,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.log(e);
+    }
+
+    try {
+      pkg.get = function (...args: any) {
+        const req = originalGet.apply(this, args);
+
+        console.log("get");
+
+        req.on("response", (res: any) => {
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.path,
+            timestamp: new Date(),
+            status: res.statusCode,
+            duration: res.elapsedTime,
+            ipAddress: req.ip,
+            memoryUsage: process.memoryUsage(),
+            middleware: "https",
+            controllerAction: "https",
+            hostname: req.hostname,
+            payload: req.body,
+            session: req.session ? req.session.id : "none",
+            response: res.locals || "none",
+            headers: req.headers,
+            body: req.body,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.log(e);
+    }
+  } else if (packageName === "http") {
+    const originalRequest = pkg.request;
+    const originalGet = pkg.get;
+
+    try {
+      pkg.request = function (...args: any) {
+        const req = originalRequest.apply(this, args);
+
+        req.on("response", (res: any) => {
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.path,
+            timestamp: new Date(),
+            status: res.statusCode,
+            duration: res.elapsedTime,
+            ipAddress: req.ip,
+            memoryUsage: process.memoryUsage(),
+            middleware: "http",
+            controllerAction: "http",
+            hostname: req.hostname,
+            payload: req.body,
+            session: req.session ? req.session.id : "none",
+            response: res.locals || "none",
+            headers: req.headers,
+            body: req.body,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.log(e);
+    }
+
+    try {
+      pkg.get = function (...args: any) {
+        const req = originalGet.apply(this, args);
+
+        console.log("get");
+
+        req.on("response", (res: any) => {
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.path,
+            timestamp: new Date(),
+            status: res.statusCode,
+            duration: res.elapsedTime,
+            ipAddress: req.ip,
+            memoryUsage: process.memoryUsage(),
+            middleware: "http",
+            controllerAction: "http",
+            hostname: req.hostname,
+            payload: req.body,
+            session: req.session ? req.session.id : "none",
+            response: res.locals || "none",
+            headers: req.headers,
+            body: req.body,
+          });
+        });
+
+        return req;
       };
     } catch (e) {
       console.log(e);
@@ -356,6 +487,7 @@ function globalCollector(
 
     try {
       pkg.prototype.set = function (...args: any) {
+        console.log("set");
         cacheLogger.addContent({
           key: args[0],
           value: args[1],
@@ -367,6 +499,7 @@ function globalCollector(
       };
 
       pkg.prototype.get = function (...args: any) {
+        console.log("get");
         cacheLogger.addContent({
           key: args[0],
           value: args[1],
@@ -413,23 +546,29 @@ function globalCollector(
     };
   } else if (packageName === "knex") {
     if (options.connection) {
-      options.connection.on("query", (query: any) => {
-        console.log(query);
-        if (query.sql.includes("insert into `observatory_entries`")) {
-          return;
-        }
+      const queryStartTimes: { [key: string]: number } = {};
 
-        try {
-          queryLogger.addContent({
-            query: query.sql,
-            time: new Date(),
-            host: options.connection.client.config.connection.host,
-            database: options.connection.client.config.connection.database,
-            user: options.connection.client.config.connection.user,
-            port: options.connection.client.config.connection.port,
-          });
-        } catch (e) {
-          console.error(e);
+      options.connection.on("query", (query: any) => {
+        queryStartTimes[query.__knexQueryUid] = Date.now();
+      });
+
+      options.connection.on("query-response", (response: any, query: any) => {
+        const startTime = queryStartTimes[query.__knexQueryUid];
+        if (startTime) {
+          const duration = Date.now() - startTime;
+
+          if (!query?.sql.includes("observatory_entries")) {
+            queryLogger.addContent({
+              query: query.sql,
+              time: new Date(),
+              host: options.connection.client.config.connection.host,
+              database: options.connection.client.config.connection.database,
+              user: options.connection.client.config.connection.user,
+              port: options.connection.client.config.connection.port,
+              duration,
+            });
+          }
+          delete queryStartTimes[query.__knexQueryUid];
         }
       });
     }

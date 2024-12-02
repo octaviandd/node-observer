@@ -5,18 +5,18 @@ import Watcher from "../core/Watcher";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
 
-const QueryWatcher = Object.create(Watcher);
+const HTTPClientWatcher = Object.create(Watcher);
 
-QueryWatcher.type = "query";
-QueryWatcher.should_display_on_index = true;
-QueryWatcher.content = {};
+HTTPClientWatcher.type = "http";
+HTTPClientWatcher.should_display_on_index = true;
+HTTPClientWatcher.content = {};
 
-QueryWatcher.addContent = async function (content: any) {
+HTTPClientWatcher.addContent = async function (content: any) {
   const newEntry = {
     uuid: uuidv4(),
     batch_id: uuidv4(),
     family_hash: uuidv4(),
-    type: this.type,
+    type: "http",
     should_display_on_index: true,
     content: JSON.stringify(content),
   };
@@ -25,16 +25,14 @@ QueryWatcher.addContent = async function (content: any) {
     const result = await connection("observatory_entries").insert(newEntry);
     return result;
   } catch (error) {
-    console.error("Error adding content to QueryWatcher", error);
+    console.error("Error adding content to HTTPClientWatcher", error);
   }
 };
 
-QueryWatcher.getIndex = async (req: Request, res: Response) => {
+HTTPClientWatcher.getIndex = async (req: Request, res: Response) => {
   try {
     let data = await connection("observatory_entries")
-      .where({
-        type: "query",
-      })
+      .whereIn("type", ["http", "https"])
       .orderBy("created_at", "desc");
     return res.status(200).json(data);
   } catch (e) {
@@ -42,11 +40,11 @@ QueryWatcher.getIndex = async (req: Request, res: Response) => {
   }
 };
 
-QueryWatcher.getView = async (req: Request, res: Response) => {
+HTTPClientWatcher.getView = async (req: Request, res: Response) => {
   try {
     let data = await connection("observatory_entries")
       .where({
-        uuid: req.params.queryId,
+        uuid: req.params.requestId,
       })
       .first();
     return res.status(200).json(data);
@@ -55,4 +53,4 @@ QueryWatcher.getView = async (req: Request, res: Response) => {
   }
 };
 
-export default QueryWatcher;
+export default HTTPClientWatcher;

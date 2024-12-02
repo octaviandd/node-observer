@@ -30,10 +30,18 @@ import BatchesIndex from "./screens/batch/BatchesIndex";
 import BatchPreview from "./screens/batch/BatchPreview";
 import EventsIndex from "./screens/event/EventsIndex";
 import EventPreview from "./screens/event/EventPreview";
-import CacheIndex from "./screens/cache/CachesIndex";
-import CachePreview from "./screens/cache/CachePreview";
-import QueriesIndex from "./screens/query/QueriesIndex";
-import QueryPreview from "./screens/query/QueryPreview";
+import CacheIndex, {
+  loader as CacheIndexLoader,
+} from "./screens/cache/CachesIndex";
+import CachePreview, {
+  loader as CachePreviewLoader,
+} from "./screens/cache/CachePreview";
+import QueriesIndex, {
+  loader as QueriesIndexLoader,
+} from "./screens/query/QueriesIndex";
+import QueryPreview, {
+  loader as QueryPreviewLoader,
+} from "./screens/query/QueryPreview";
 import ModelsIndex from "./screens/model/ModelsIndex";
 import ModelPreview from "./screens/model/ModelPreview";
 import RequestsIndex, {
@@ -56,6 +64,12 @@ import RedisIndex, {
 import RedisPreview, {
   loader as RedisViewLoader,
 } from "./screens/redis/RedisPreview";
+import HttpIndex, {
+  loader as httpIndexLoader,
+} from "./screens/http/HttpsIndex";
+import HttpPreview, {
+  loader as httpViewLoader,
+} from "./screens/http/HttpPreview";
 import LogIndex from "./screens/log/LogsIndex";
 import LogPreview from "./screens/log/LogPreview";
 
@@ -132,20 +146,24 @@ const router = createBrowserRouter([
         element: <EventsIndex />,
       },
       {
-        path: "/cache/:id",
+        path: "/cache/:cacheId",
         element: <CachePreview />,
+        loader: CachePreviewLoader,
       },
       {
         path: "/cache",
         element: <CacheIndex />,
+        loader: CacheIndexLoader,
       },
       {
-        path: "/queries/:id",
+        path: "/queries/:queryId",
         element: <QueryPreview />,
+        loader: QueryPreviewLoader,
       },
       {
         path: "/queries",
         element: <QueriesIndex />,
+        loader: QueriesIndexLoader,
       },
       {
         path: "/models/:id",
@@ -193,17 +211,19 @@ const router = createBrowserRouter([
         element: <RedisIndex />,
         loader: RedisIndexLoader,
       },
+      {
+        path: "/http",
+        element: <HttpIndex />,
+        loader: httpIndexLoader,
+      },
+      {
+        path: "/http/:httpId",
+        element: <HttpPreview />,
+        loader: httpViewLoader,
+      },
       // {
       //   path: '/monitored-tags',
       //   element: <MonitoredTags />,
-      // },
-      // {
-      //   path: '/gates/:id',
-      //   element: <GatePreview />,
-      // },
-      // {
-      //   path: '/gates',
-      //   element: <GatesIndex />,
       // },
       // {
       //   path: '/views/:id',

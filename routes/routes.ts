@@ -7,6 +7,9 @@ import RedisWatcher from "../watchers/RedisWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
 import NotificationWatcher from "../watchers/NotificationWatcher";
 import ExceptionWatcher from "../watchers/ExceptionWatcher";
+import QueryWatcher from "../watchers/QueryWatcher";
+import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
+import CacheWatcher from "../watchers/CacheWatcher";
 
 const router = Router();
 
@@ -68,16 +71,38 @@ router.get("/notifications/:notificationId", (req, res) => {
 const exceptionController = Object.create(ExceptionWatcher);
 // Exception entries...
 router.get("/exceptions", (req, res) => {
-  console.log("here");
   exceptionController.getIndex(req, res);
 });
 router.get("/exceptions/:exceptionId", (req, res) => {
   exceptionController.getView(req, res);
 });
 
-// Dump entries...
-router.post("/dumps", (req, res) => {
-  // Handle dumps index
+const queriesController = Object.create(QueryWatcher);
+// Queries entries...
+router.get("/queries", (req, res) => {
+  queriesController.getIndex(req, res);
+});
+router.get("/queries/:queryId", (req, res) => {
+  queriesController.getView(req, res);
+});
+
+const httpClientController = Object.create(HTTPClientWatcher);
+// HTTP Client entries...
+router.get("/http", (req, res) => {
+  httpClientController.getIndex(req, res);
+});
+router.get("/http/:requestId", (req, res) => {
+  httpClientController.getView(req, res);
+});
+
+const cacheController = Object.create(CacheWatcher);
+// Cache entries...
+router.get("/cache", (req, res) => {
+  console.log("hit");
+  cacheController.getIndex(req, res);
+});
+router.get("/cache/:cacheId", (req, res) => {
+  cacheController.getView(req, res);
 });
 
 // Log entries...
@@ -110,30 +135,6 @@ router.post("/events", (req, res) => {
 });
 router.get("/events/:observatoryEntryId", (req, res) => {
   // Handle events show
-});
-
-// Gates entries...
-router.post("/gates", (req, res) => {
-  // Handle gates index
-});
-router.get("/gates/:observatoryEntryId", (req, res) => {
-  // Handle gates show
-});
-
-// Cache entries...
-router.post("/cache", (req, res) => {
-  // Handle cache index
-});
-router.get("/cache/:observatoryEntryId", (req, res) => {
-  // Handle cache show
-});
-
-// Queries entries...
-router.post("/queries", (req, res) => {
-  // Handle queries index
-});
-router.get("/queries/:observatoryEntryId", (req, res) => {
-  // Handle queries show
 });
 
 // Eloquent entries...
