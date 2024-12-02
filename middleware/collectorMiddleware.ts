@@ -424,8 +424,8 @@ function globalCollector(
                     : "unknown",
                   hostname: req.hostname,
                   payload: req.body,
-                  session: req.session ? req.session.id : "none",
-                  response: res.locals || "none",
+                  session: req.session,
+                  response: res,
                   headers: req.headers,
                   body: req.body,
                 });

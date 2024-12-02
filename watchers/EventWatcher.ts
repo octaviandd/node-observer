@@ -31,9 +31,11 @@ class EventWatcher implements Watcher {
 
   public async getIndex(req: Request, res: Response): Promise<Response> {
     try {
-      const data = await connection("observatory_entries").where({
-        type: "event",
-      });
+      const data = await connection("observatory_entries")
+        .where({
+          type: "event",
+        })
+        .orderBy("created_at", "desc");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from EventWatcher", error);

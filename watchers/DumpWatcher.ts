@@ -31,9 +31,11 @@ class DumpWatcher implements Watcher {
 
   public async getIndex(req: Request, res: Response): Promise<Response> {
     try {
-      const data = await connection("observatory_entries").where({
-        type: "dump",
-      });
+      const data = await connection("observatory_entries")
+        .where({
+          type: "dump",
+        })
+        .orderBy("created_at", "desc");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from DumpWatcher", error);

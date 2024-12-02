@@ -24,6 +24,7 @@ import https from "https";
 import { createLogger, format, transports } from "winston";
 import Queue from "bull";
 import Agenda from "agenda";
+import os from "os";
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -77,6 +78,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+
+console.log(os.cpus());
+console.log(os.totalmem());
+console.log(os.freemem());
 
 app.use("/observatory-api/data", routes);
 

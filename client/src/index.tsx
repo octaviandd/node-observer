@@ -24,8 +24,10 @@ import NotificationsIndex, {
 import NotificationPreview, {
   loader as NotificationsViewLoader,
 } from "./screens/notification/NotificationPreview";
-import JobIndex from "./screens/job/JobsIndex";
-import JobPreview from "./screens/job/JobPreview";
+import JobIndex, { loader as JobIndexLoader } from "./screens/job/JobsIndex";
+import JobPreview, {
+  loader as JobPreviewLoader,
+} from "./screens/job/JobPreview";
 import BatchesIndex from "./screens/batch/BatchesIndex";
 import BatchPreview from "./screens/batch/BatchPreview";
 import EventsIndex from "./screens/event/EventsIndex";
@@ -70,8 +72,8 @@ import HttpIndex, {
 import HttpPreview, {
   loader as httpViewLoader,
 } from "./screens/http/HttpPreview";
-import LogIndex from "./screens/log/LogsIndex";
-import LogPreview from "./screens/log/LogPreview";
+import LogIndex, { loader as LogIndexLoader } from "./screens/log/LogsIndex";
+import LogPreview, { loader as LogViewLoader } from "./screens/log/LogPreview";
 
 const router = createBrowserRouter([
   {
@@ -109,12 +111,14 @@ const router = createBrowserRouter([
         element: <DumpsIndex />,
       },
       {
-        path: "/logs/:id",
+        path: "/logs/:logId",
         element: <LogPreview />,
+        loader: LogViewLoader,
       },
       {
         path: "/logs",
         element: <LogIndex />,
+        loader: LogIndexLoader,
       },
       {
         path: "/notifications/:notificationId",
@@ -127,12 +131,14 @@ const router = createBrowserRouter([
         loader: NotificationsIndexLoader,
       },
       {
-        path: "/jobs/:id",
+        path: "/jobs/:jobId",
         element: <JobPreview />,
+        loader: JobPreviewLoader,
       },
       {
         path: "/jobs",
         element: <JobIndex />,
+        loader: JobIndexLoader,
       },
       {
         path: "/batches/:id",

@@ -31,9 +31,11 @@ class LogWatcher implements Watcher {
 
   public async getIndex(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries").where({
-        type: "log",
-      });
+      const data = await connection("observatory_entries")
+        .where({
+          type: "log",
+        })
+        .orderBy("created_at", "desc");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from LogWatcher", error);

@@ -14,8 +14,15 @@ interface RequestResponse {
     status: number;
     timestamp: string;
     hostname: string;
+    session: {
+      [key: string]: string;
+    };
     middleware: string;
+    headers: {
+      [key: string]: string;
+    };
     ipAddress: string;
+    payload: object;
     memoryUsage: {
       heapTotal: number;
       rss: number;
@@ -54,18 +61,17 @@ export default function RequestPreview() {
     },
   ]);
 
+  console.log(request);
+
   return (
     <div>
       <div className="flex flex-col shadow-md">
         <div className="">
           <div className="bg-white h-full w-full px-4 py-3">
-            <span>Request Details</span>
+            <span className="font-medium">Request Details</span>
           </div>
         </div>
         <div className="px-3">
-          {/* {isLoading && <div>Loading...</div>}
-        {error && <div>Error loading data</div>}
-        {data && ( */}
           <div className="flex flex-col gap-y-4 py-4">
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Time</div>
@@ -89,7 +95,7 @@ export default function RequestPreview() {
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Method</div>
               <div className="col-span-8">
-                <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                <span className="bg-[#E4E7EB] font-medium px-2  rounded-md">
                   {request.content.method}
                 </span>
               </div>
@@ -143,7 +149,7 @@ export default function RequestPreview() {
 
       <div className="flex flex-col shadow-md mt-8">
         <div className="flex items-center gap-x-4">
-          <div className="bg-white h-full w-full  flex items-center gap-x-10 ">
+          <div className="bg-white h-full w-full flex items-center gap-x-10">
             {tabs.map((tab, index) => (
               <span
                 onClick={() =>
@@ -157,14 +163,62 @@ export default function RequestPreview() {
                 key={tab.id}
                 className={`${
                   tab.active ? "text-blue-600 border-b border-blue-600" : ""
-                } py-3 px-4 cursor-pointer font-medium`}
+                } py-3 px-4 cursor-pointer font-medium text-sm`}
               >
                 {tab.title}
               </span>
             ))}
           </div>
         </div>
-        <div className="px-3"></div>
+        <div className="">
+          <div className="py-4 bg-[#1E1E1E] text-white">
+            {tabs[0].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.payload).map(
+                    ([key, value]) => (
+                      <div key={key} className="flex hover:bg-neutral-600">
+                        <span>{key}: </span>
+                        <span className="text-blue-500 break-all whitespace-pre-wrap">
+                          {value}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </pre>
+              </div>
+            )}
+            {tabs[1].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.headers).map(
+                    ([key, value]) => (
+                      <div key={key} className="flex hover:bg-neutral-600">
+                        <span>{key}: </span>
+                        <span className="text-blue-500 break-all whitespace-pre-wrap">
+                          {value}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </pre>
+              </div>
+            )}
+            {tabs[2].active && (
+              <div className="break-words">
+                {Object.entries(request.content.session).map(([key, value]) => (
+                  <div key={key} className="flex hover:bg-neutral-600">
+                    <span>{key}: </span>
+                    <span className="text-blue-500 break-all whitespace-pre-wrap">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {tabs[3].active && <div>Response Content</div>}
+          </div>
+        </div>
       </div>
     </div>
   );

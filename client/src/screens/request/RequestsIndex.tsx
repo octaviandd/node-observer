@@ -27,15 +27,15 @@ export default function RequestsIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Requests</span>
+        <span className="font-medium">Requests</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
           <span className="col-span-1">Verb</span>
-          <span className="col-span-4">Path</span>
-          <span className="col-span-2">Status</span>
-          <span className="col-span-2">Duration</span>
-          <span className="col-span-2">Happened</span>
+          <span className="col-span-7">Path</span>
+          <span className="col-span-1">Status</span>
+          <span className="col-span-1">Duration</span>
+          <span className="col-span-1">Happened</span>
           <span className="col-span-1"></span>
         </div>
         <table className="w-full">
@@ -46,14 +46,14 @@ export default function RequestsIndex() {
                 className="grid w-full grid-cols-12 py-3 bg-white px-4"
               >
                 <td className="col-span-1">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="bg-[#E4E7EB] text-neutral-600 font-medium px-2 rounded-md">
                     {request.content.method}
                   </span>
                 </td>
-                <td className="col-span-4">{request.content.url}</td>
-                <td className="col-span-2">
+                <td className="col-span-7">{request.content.url}</td>
+                <td className="col-span-1">
                   <span
-                    className={`${
+                    className={`text-sm ${
                       String(request.content.status).startsWith("2")
                         ? "bg-[#D1FAE4]"
                         : String(request.content.status).startsWith("3")
@@ -64,9 +64,15 @@ export default function RequestsIndex() {
                     {request.content.status}
                   </span>
                 </td>
-                <td className="col-span-2">{request.content.duration}ms</td>
                 <td className="col-span-1">
-                  {timeAgo(request.content.timestamp)}
+                  <span className="text-neutral-600 text-sm">
+                    {request.content.duration}ms
+                  </span>
+                </td>
+                <td className="col-span-1">
+                  <span className="text-neutral-600 text-sm">
+                    {timeAgo(request.content.timestamp)}
+                  </span>
                 </td>
                 <td className="col-span-1 ml-auto">
                   <Link

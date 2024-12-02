@@ -30,9 +30,11 @@ class HTTPClientWatcher implements Watcher {
 
   public async getIndex(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries").where({
-        type: "[http, https]",
-      });
+      const data = await connection("observatory_entries")
+        .where({
+          type: "[http, https]",
+        })
+        .orderBy("created_at", "desc");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from HTTPClientWatcher", error);
