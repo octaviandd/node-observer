@@ -29,13 +29,13 @@ export default function RequestsIndex() {
       <div className="bg-white px-4 py-3">
         <span className="font-medium">Requests</span>
       </div>
-      <div className="bg-[]">
+      <div>
         <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
           <span className="col-span-1">Verb</span>
-          <span className="col-span-7">Path</span>
+          <span className="col-span-6">Path</span>
           <span className="col-span-1">Status</span>
           <span className="col-span-1">Duration</span>
-          <span className="col-span-1">Happened</span>
+          <span className="col-span-2">Happened</span>
           <span className="col-span-1"></span>
         </div>
         <table className="w-full">
@@ -50,7 +50,7 @@ export default function RequestsIndex() {
                     {request.content.method}
                   </span>
                 </td>
-                <td className="col-span-7">{request.content.url}</td>
+                <td className="col-span-6">{request.content.url}</td>
                 <td className="col-span-1">
                   <span
                     className={`text-sm ${
@@ -69,7 +69,7 @@ export default function RequestsIndex() {
                     {request.content.duration}ms
                   </span>
                 </td>
-                <td className="col-span-1">
+                <td className="col-span-2">
                   <span className="text-neutral-600 text-sm">
                     {timeAgo(request.content.timestamp)}
                   </span>

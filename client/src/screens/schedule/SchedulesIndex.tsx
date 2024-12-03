@@ -25,15 +25,15 @@ export default function RedisIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Schedule</span>
+        <span className="font-medium">Schedules</span>
       </div>
-      <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
-          <span className="col-span-3">Name</span>
-          <span className="col-span-3">Recurrence</span>
-          <span className="col-span-2">Mode</span>
-          <span className="col-span-2">Time</span>
-          <span className="col-span-2"></span>
+      <div>
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
+          <span className="col-span-6">Name</span>
+          <span className="col-span-1">Mode</span>
+          <span className="col-span-2">Recurrence</span>
+          <span className="col-span-2">Happened</span>
+          <span className="col-span-1"></span>
         </div>
         <table className="w-full">
           <tbody>
@@ -42,15 +42,27 @@ export default function RedisIndex() {
                 key={schedule.uuid}
                 className="grid w-full grid-cols-12 py-3 bg-white px-4"
               >
-                <td className="col-span-3">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                <td className="col-span-6">
+                  <span className="font-medium text-sm px-2 py-1 rounded-md">
                     {schedule.content.name}
                   </span>
                 </td>
-                <td className="col-span-3">{schedule.content.info}</td>
-                <td className="col-span-2">{schedule.content.mode}</td>
-                <td className="col-span-2">{timeAgo(schedule.content.time)}</td>
-                <td className="col-span-2 ml-auto">
+                <td className="col-span-1 text-sm">
+                  <span
+                    className={`px-2 py-1 rounded-md text-sm ${
+                      schedule.content.mode === "cancel"
+                        ? "bg-red-300"
+                        : "bg-[#D1FAE4]"
+                    }`}
+                  >
+                    {schedule.content.mode}
+                  </span>
+                </td>
+                <td className="col-span-2 text-sm">{schedule.content.info}</td>
+                <td className="col-span-2 text-sm">
+                  {timeAgo(schedule.content.time)}
+                </td>
+                <td className="col-span-1 ml-auto">
                   <Link
                     to={`${schedule.uuid}`}
                     state={{ scheduleId: schedule.uuid }}

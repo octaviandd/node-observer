@@ -12,7 +12,7 @@ interface CacheResponse {
     time: string;
     type: number;
     port: number;
-    db: string;
+    stdTTL: string;
   };
 }
 
@@ -28,16 +28,15 @@ export default function CacheIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Cache</span>
+        <span className="font-medium">Cache</span>
       </div>
-      <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+      <div>
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
           <span className="col-span-2">Key</span>
-          <span className="col-span-2">Value</span>
-          <span className="col-span-2">Time</span>
+          <span className="col-span-5">Value</span>
           <span className="col-span-1">Type</span>
-          <span className="col-span-1">DB</span>
-          <span className="col-span-1">Port</span>
+          <span className="col-span-1">Time to live</span>
+          <span className="col-span-2">Happened</span>
           <span className="col-span-1"></span>
         </div>
         <table className="w-full">
@@ -45,18 +44,17 @@ export default function CacheIndex() {
             {caches.map((cache) => (
               <tr
                 key={cache.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
                 <td className="col-span-2">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="font-medium px-2 py-1 rounded-md">
                     {cache.content.key}
                   </span>
                 </td>
-                <td className="col-span-2">{cache.content.value}</td>
-                <td className="col-span-2">{timeAgo(cache.content.time)}</td>
+                <td className="col-span-5">{cache.content.value}</td>
                 <td className="col-span-1">{cache.content.type}</td>
-                <td className="col-span-1">{cache.content.db}</td>
-                <td className="col-span-1">{cache.content.port}</td>
+                <td className="col-span-1">{cache.content.stdTTL}s</td>
+                <td className="col-span-2">{timeAgo(cache.content.time)}</td>
                 <td className="col-span-1 ml-auto">
                   <Link to={`${cache.uuid}`} state={{ cacheId: cache.uuid }}>
                     <svg

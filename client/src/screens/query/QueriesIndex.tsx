@@ -28,16 +28,16 @@ export default function QueriesIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Query</span>
+        <span className="font-medium">Queries</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
           <span className="col-span-2">Host</span>
           <span className="col-span-2">Port</span>
-          <span className="col-span-2">Time</span>
           <span className="col-span-1">User</span>
+          <span className="col-span-4">Query</span>
           <span className="col-span-1">DB</span>
-          <span className="col-span-1">Query</span>
+          <span className="col-span-1">Time</span>
           <span className="col-span-1"></span>
         </div>
         <table className="w-full">
@@ -45,18 +45,18 @@ export default function QueriesIndex() {
             {queries.map((query) => (
               <tr
                 key={query.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
                 <td className="col-span-2">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="font-medium px-2 py-1 rounded-md">
                     {query.content.host}
                   </span>
                 </td>
                 <td className="col-span-2">{query.content.port}</td>
-                <td className="col-span-2">{timeAgo(query.content.time)}</td>
                 <td className="col-span-1">{query.content.user}</td>
+                <td className="col-span-4">{query.content.query}</td>
                 <td className="col-span-1">{query.content.database}</td>
-                <td className="col-span-1">{query.content.query}</td>
+                <td className="col-span-1">{timeAgo(query.content.time)}</td>
                 <td className="col-span-1 ml-auto">
                   <Link to={`${query.uuid}`} state={{ queryId: query.uuid }}>
                     <svg

@@ -14,6 +14,7 @@ interface HttpResponse {
     response: string;
     timestamp: string;
     middleware: string;
+    duration: number;
     memoryUsage: {
       rss: number;
       heapTotal: number;
@@ -35,14 +36,14 @@ export default function HttpsIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>HTTPs</span>
+        <span className="font-medium">HTTPs</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
           <span className="col-span-1">Verb</span>
-          <span className="col-span-4">Path</span>
-          <span className="col-span-2">Status</span>
-          <span className="col-span-2">Duration</span>
+          <span className="col-span-6">Path</span>
+          <span className="col-span-1">Status</span>
+          <span className="col-span-1">Duration</span>
           <span className="col-span-2">Happened</span>
           <span className="col-span-1"></span>
         </div>
@@ -51,15 +52,17 @@ export default function HttpsIndex() {
             {https.map((http) => (
               <tr
                 key={http.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
                 <td className="col-span-1">
                   <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
                     {http.content.method}
                   </span>
                 </td>
-                <td className="col-span-4">{http.content.url}</td>
-                <td className="col-span-2">
+                <td className="col-span-6 text-ellipsis overflow-hidden">
+                  <span className="">{http.content.url}</span>
+                </td>
+                <td className="col-span-1">
                   <span
                     className={`${
                       String(http.content.status).startsWith("2")
@@ -67,12 +70,12 @@ export default function HttpsIndex() {
                         : String(http.content.status).startsWith("3")
                         ? "bg-[#D1FAE4]"
                         : "bg-red-300"
-                    } px-2 py-1 rounded-md`}
+                    } px-2 text-sm rounded-md`}
                   >
                     {http.content.status}
                   </span>
                 </td>
-                {/* <td className="col-span-2">{http.content.duration}ms</td> */}
+                <td className="col-span-1">{http.content.duration}ms</td>
                 <td className="col-span-1">
                   {timeAgo(http.content.timestamp)}
                 </td>

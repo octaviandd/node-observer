@@ -29,16 +29,16 @@ export default function RedisIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Redis</span>
+        <span className="font-medium">Redis</span>
       </div>
-      <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
-          <span className="col-span-2">Key</span>
-          <span className="col-span-2">Value</span>
-          <span className="col-span-2">Time</span>
+      <div>
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
+          <span className="col-span-3">Key</span>
+          <span className="col-span-3">Value</span>
           <span className="col-span-1">Type</span>
           <span className="col-span-1">DB</span>
           <span className="col-span-1">Port</span>
+          <span className="col-span-2">Time</span>
           <span className="col-span-1"></span>
         </div>
         <table className="w-full">
@@ -46,18 +46,18 @@ export default function RedisIndex() {
             {redis.map((redisRow) => (
               <tr
                 key={redisRow.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
-                <td className="col-span-2">
+                <td className="col-span-3">
                   <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
                     {redisRow.content.key}
                   </span>
                 </td>
-                <td className="col-span-2">{redisRow.content.value}</td>
-                <td className="col-span-2">{timeAgo(redisRow.content.time)}</td>
+                <td className="col-span-3">{redisRow.content.value}</td>
                 <td className="col-span-1">{redisRow.content.type}</td>
                 <td className="col-span-1">{redisRow.content.db}</td>
                 <td className="col-span-1">{redisRow.content.port}</td>
+                <td className="col-span-2">{timeAgo(redisRow.content.time)}</td>
                 <td className="col-span-1 ml-auto">
                   <Link
                     to={`${redisRow.uuid}`}

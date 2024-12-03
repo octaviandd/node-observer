@@ -54,6 +54,8 @@ export default function HttpPreview() {
     },
   ]);
 
+  console.log(http);
+
   return (
     <div>
       <div className="flex flex-col shadow-md">
@@ -63,9 +65,6 @@ export default function HttpPreview() {
           </div>
         </div>
         <div className="px-3">
-          {/* {isLoading && <div>Loading...</div>}
-        {error && <div>Error loading data</div>}
-        {data && ( */}
           <div className="flex flex-col gap-y-4 py-4">
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Time</div>
@@ -137,13 +136,12 @@ export default function HttpPreview() {
               </div>
             </div>
           </div>
-          {/* )} */}
         </div>
       </div>
 
       <div className="flex flex-col shadow-md mt-8">
         <div className="flex items-center gap-x-4">
-          <div className="bg-white h-full w-full  flex items-center gap-x-10 ">
+          <div className="bg-white h-full w-full flex items-center gap-x-10">
             {tabs.map((tab, index) => (
               <span
                 onClick={() =>
@@ -156,15 +154,103 @@ export default function HttpPreview() {
                 }
                 key={tab.id}
                 className={`${
-                  tab.active ? "text-blue-600 border-b border-blue-600" : ""
-                } py-3 px-4 cursor-pointer font-medium`}
+                  tab.active ? "text-[#488641] border-b border-[#488641]" : ""
+                } py-3 px-4 cursor-pointer font-medium text-sm`}
               >
                 {tab.title}
               </span>
             ))}
           </div>
         </div>
-        <div className="px-3"></div>
+        <div className="">
+          <div className="py-4 bg-[#1E1E1E] text-white">
+            {tabs[0].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.payload).length > 0 ? (
+                    Object.entries(request.content.payload).map(
+                      ([key, value]) => (
+                        <div key={key} className="flex hover:bg-neutral-600">
+                          <span>{key}: </span>
+                          <span className="text-blue-500 break-all whitespace-pre-wrap">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span className="">{"}"}</span>
+                    </div>
+                  )}
+                </pre>
+              </div>
+            )}
+            {tabs[1].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.headers).map(
+                    ([key, value]) => (
+                      <div key={key} className="flex hover:bg-neutral-600">
+                        <span>{key}: </span>
+                        <span className="text-blue-500 break-all whitespace-pre-wrap">
+                          {value}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </pre>
+              </div>
+            )}
+            {tabs[2].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.session).length > 0 ? (
+                    Object.entries(request.content.session).map(
+                      ([key, value]) => (
+                        <div key={key} className="flex hover:bg-neutral-600">
+                          <span>{key}: </span>
+                          <span className="text-blue-500 break-all whitespace-pre-wrap">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span>{"}"}</span>
+                    </div>
+                  )}
+                </pre>
+              </div>
+            )}
+            {tabs[3].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.response).length > 0 ? (
+                    Object.entries(request.content.response).map(
+                      ([key, value]) => (
+                        <div key={key} className="flex hover:bg-neutral-600">
+                          <span>{key}: </span>
+                          <span className="text-blue-500 break-all whitespace-pre-wrap">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span>{"}"}</span>
+                    </div>
+                  )}
+                </pre>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

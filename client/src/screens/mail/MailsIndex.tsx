@@ -28,10 +28,10 @@ export default function MailsIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Mails</span>
+        <span className="font-medium">Mails</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
           <span className="col-span-3">To</span>
           <span className="col-span-2">From</span>
           <span className="col-span-2">Text</span>
@@ -44,14 +44,16 @@ export default function MailsIndex() {
             {mails.map((mail) => (
               <tr
                 key={mail.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
                 <td className="col-span-3">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="font-medium px-2 py-1 rounded-md">
                     {mail.content.to}
                   </span>
                 </td>
-                <td className="col-span-2">{mail.content.from}</td>
+                <td className="col-span-2">
+                  <a>{mail.content.from}</a>
+                </td>
                 <td className="col-span-2">{mail.content.text}</td>
                 <td className="col-span-3">{mail.content.html}</td>
                 <td className="col-span-1">{timeAgo(mail.content.time)}</td>

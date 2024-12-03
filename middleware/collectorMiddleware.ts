@@ -206,7 +206,7 @@ function globalCollector(
         return originalTrigger.apply(this, args);
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   } else if (packageName === "events") {
     // const originalEmit = pkg.EventEmitter.prototype.emit;
@@ -242,63 +242,73 @@ function globalCollector(
     try {
       pkg.request = function (...args: any) {
         const req = originalRequest.apply(this, args);
+        const start = Date.now();
 
         req.on("response", (res: any) => {
+          const memoryUsage = process.memoryUsage();
+          const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
             url: req.path,
             timestamp: new Date(),
             status: res.statusCode,
-            duration: res.elapsedTime,
-            ipAddress: req.ip,
-            memoryUsage: process.memoryUsage(),
-            middleware: "https",
-            controllerAction: "https",
-            hostname: req.hostname,
-            payload: req.body,
-            session: req.session ? req.session.id : "none",
-            response: res.locals || "none",
-            headers: req.headers,
-            body: req.body,
+            duration,
+            ipAddress: req.socket.remoteAddress,
+            sockets: req.agent?.sockets || "N/A",
+            memoryUsage,
+            hostname: req.host,
+            servername: res.servername || "unknown",
+            payload: req.body || "N/A",
+            protocol: req.agent.protocol,
+            options: req.agent?.options || "N/A",
+            session: req.session || {},
+            response: req._events.response(),
+            headers: req._header,
           });
         });
 
         return req;
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
 
     try {
       pkg.get = function (...args: any) {
         const req = originalGet.apply(this, args);
-
-        console.log("get");
+        const start = Date.now();
 
         req.on("response", (res: any) => {
+          const duration = Date.now() - start; // Calculate the duration
+          const memoryUsage = process.memoryUsage();
+
+          console.log({ getReq: req, getRes: res });
+
+          // Collect and log HTTP details
           httpClientLogger.addContent({
             method: req.method,
             url: req.path,
             timestamp: new Date(),
-            status: res.statusCode,
-            duration: res.elapsedTime,
-            ipAddress: req.ip,
-            memoryUsage: process.memoryUsage(),
-            middleware: "https",
-            controllerAction: "https",
-            hostname: req.hostname,
-            payload: req.body,
-            session: req.session ? req.session.id : "none",
-            response: res.locals || "none",
-            headers: req.headers,
-            body: req.body,
+            status: res?.statusCode || req.res.statusCode,
+            duration,
+            ipAddress: req.socket.remoteAddress,
+            sockets: req.agent?.sockets || "N/A",
+            memoryUsage,
+            hostname: req.host,
+            servername: res.servername || "unknown",
+            payload: req.body || "N/A",
+            protocol: req.agent.protocol,
+            options: req.agent?.options || "N/A",
+            session: req.session || {},
+            response: req._events.response(),
+            headers: req._header,
           });
         });
 
         return req;
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   } else if (packageName === "http") {
     const originalRequest = pkg.request;
@@ -307,46 +317,51 @@ function globalCollector(
     try {
       pkg.request = function (...args: any) {
         const req = originalRequest.apply(this, args);
+        const memoryUsage = process.memoryUsage();
+        const start = Date.now();
 
         req.on("response", (res: any) => {
+          const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
             url: req.path,
             timestamp: new Date(),
-            status: res.statusCode,
-            duration: res.elapsedTime,
-            ipAddress: req.ip,
-            memoryUsage: process.memoryUsage(),
-            middleware: "http",
-            controllerAction: "http",
-            hostname: req.hostname,
-            payload: req.body,
-            session: req.session ? req.session.id : "none",
-            response: res.locals || "none",
-            headers: req.headers,
-            body: req.body,
+            status: res?.statusCode || req.res.statusCode,
+            duration,
+            ipAddress: req.socket.remoteAddress,
+            sockets: req.agent?.sockets || "N/A",
+            memoryUsage,
+            hostname: req.host,
+            servername: res.servername || "unknown",
+            payload: req.body || "N/A",
+            protocol: req.agent.protocol,
+            options: req.agent?.options || "N/A",
+            session: req.session || {},
+            response: req._events.response(),
+            headers: req._header,
           });
         });
 
         return req;
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
 
     try {
       pkg.get = function (...args: any) {
         const req = originalGet.apply(this, args);
 
-        console.log("get");
+        const start = Date.now();
 
         req.on("response", (res: any) => {
+          const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
             url: req.path,
             timestamp: new Date(),
-            status: res.statusCode,
-            duration: res.elapsedTime,
+            status: res?.statusCode || req.res.statusCode,
+            duration: duration,
             ipAddress: req.ip,
             memoryUsage: process.memoryUsage(),
             middleware: "http",
@@ -363,7 +378,7 @@ function globalCollector(
         return req;
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   } else if (packageName === "nodemailer") {
     const originalTrigger = pkg.createTransport;
@@ -392,7 +407,7 @@ function globalCollector(
         return transporterInstance;
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   } else if (packageName === "express") {
     const originalUse = pkg.application.use;
@@ -419,13 +434,10 @@ function globalCollector(
                   ipAddress: req.ip,
                   memoryUsage: process.memoryUsage(),
                   middleware: req.route ? req.route.path : "unknown",
-                  controllerAction: req.route
-                    ? req.route.stack[0].name
-                    : "unknown",
-                  hostname: req.hostname,
+                  hostname: req.host,
                   payload: req.body,
-                  session: req.session,
-                  response: res,
+                  session: req.session || {},
+                  response: res.locals,
                   headers: req.headers,
                   body: req.body,
                 });
@@ -439,7 +451,7 @@ function globalCollector(
         return originalUse.apply(this, args);
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   } else if (packageName === "bull") {
     const originalCreate = pkg.Job.create;
@@ -455,7 +467,7 @@ function globalCollector(
         return originalCreate.apply(this, args);
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
 
     try {
@@ -468,7 +480,7 @@ function globalCollector(
         return originalRemove.apply(this, args);
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   } else if (packageName === "node-schedule") {
     const originalScheduleJob = pkg.scheduleJob;
@@ -498,7 +510,7 @@ function globalCollector(
         return originalScheduleJob.apply(this, args);
       };
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
 
     let originalCancelJob = pkg.cancelJob;
@@ -521,8 +533,8 @@ function globalCollector(
     try {
       pkg.rescheduleJob = function (...args: any) {
         scheduleLogger.addContent({
-          name: args.length > 2 ? args[0] : "",
-          info: args.length > 2 ? args[1] : args[0],
+          name: args[0],
+          info: args[1],
           time: new Date(),
           mode: "reschedule",
         });
@@ -558,7 +570,6 @@ function globalCollector(
       };
 
       pkg.info = function (...args: any) {
-        console.log("info");
         logLogger.addContent({
           level: "info",
           message: args[0],
@@ -584,11 +595,14 @@ function globalCollector(
 
     try {
       pkg.prototype.set = function (...args: any) {
-        console.log("set");
         cacheLogger.addContent({
           key: args[0],
           value: args[1],
           time: new Date(),
+          stdTTL: this.options.stdTTL,
+          deleteOnExpire: this.options.deleteOnExpire,
+          checkPeriod: this.options.checkperiod,
+          stats: this.stats,
           type: "set",
         });
 
@@ -596,11 +610,14 @@ function globalCollector(
       };
 
       pkg.prototype.get = function (...args: any) {
-        console.log("get");
         cacheLogger.addContent({
           key: args[0],
           value: args[1],
           time: new Date(),
+          stdTTL: this.options.stdTTL,
+          deleteOnExpire: this.options.deleteOnExpire,
+          checkPeriod: this.options.checkperiod,
+          stats: this.stats,
           type: "get",
         });
 

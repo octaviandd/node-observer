@@ -28,36 +28,36 @@ export default function NotificationsIndex() {
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Redis</span>
+        <span className="font-medium">Notifications</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
-          <span className="col-span-3">Channel</span>
-          <span className="col-span-3">Name</span>
-          <span className="col-span-2">Value</span>
-          <span className="col-span-2">Time</span>
-          <span className="col-span-2"></span>
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
+          <span className="col-span-2">Channel</span>
+          <span className="col-span-2">Name</span>
+          <span className="col-span-6">Value</span>
+          <span className="col-span-1">Time</span>
+          <span className="col-span-1"></span>
         </div>
         <table className="w-full">
           <tbody>
             {notifications.map((notification) => (
               <tr
                 key={notification.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
-                <td className="col-span-3">
+                <td className="col-span-2">
                   <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
                     {notification.content.channel}
                   </span>
                 </td>
-                <td className="col-span-3">{notification.content.name}</td>
-                <td className="col-span-2">
+                <td className="col-span-2">{notification.content.name}</td>
+                <td className="col-span-6">
                   {JSON.stringify(notification.content.data)}
                 </td>
-                <td className="col-span-2">
+                <td className="col-span-1">
                   {timeAgo(notification.content.time)}
                 </td>
-                <td className="col-span-2 ml-auto">
+                <td className="col-span-1 ml-auto">
                   <Link
                     to={`${notification.uuid}`}
                     state={{ notificationId: notification.uuid }}

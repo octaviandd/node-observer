@@ -8,6 +8,7 @@
 
 body {
   margin: 0;
+  @apply w-screen min-h-screen;
   background-color: #f3f4f6;
   font-family: "Open Sans", sans-serif;
   -webkit-font-smoothing: antialiased;

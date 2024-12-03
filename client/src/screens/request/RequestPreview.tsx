@@ -21,6 +21,9 @@ interface RequestResponse {
     headers: {
       [key: string]: string;
     };
+    response: {
+      [key: string]: string;
+    };
     ipAddress: string;
     payload: object;
     memoryUsage: {
@@ -60,8 +63,6 @@ export default function RequestPreview() {
       active: false,
     },
   ]);
-
-  console.log(request);
 
   return (
     <div>
@@ -117,9 +118,9 @@ export default function RequestPreview() {
               <div className="col-span-8">
                 <span
                   className={`${
-                    request.content.status === 200
+                    String(request.content.status).startsWith("2")
                       ? "bg-[#D1FAE4]"
-                      : request.content.status === 404
+                      : String(request.content.status).startsWith("3")
                       ? "bg-[#D1FAE4]"
                       : "bg-red-300"
                   } px-2 py-1 rounded-md`}
@@ -162,7 +163,7 @@ export default function RequestPreview() {
                 }
                 key={tab.id}
                 className={`${
-                  tab.active ? "text-blue-600 border-b border-blue-600" : ""
+                  tab.active ? "text-[#488641] border-b border-[#488641]" : ""
                 } py-3 px-4 cursor-pointer font-medium text-sm`}
               >
                 {tab.title}
@@ -175,15 +176,22 @@ export default function RequestPreview() {
             {tabs[0].active && (
               <div className="break-words">
                 <pre className="pl-6 pr-12">
-                  {Object.entries(request.content.payload).map(
-                    ([key, value]) => (
-                      <div key={key} className="flex hover:bg-neutral-600">
-                        <span>{key}: </span>
-                        <span className="text-blue-500 break-all whitespace-pre-wrap">
-                          {value}
-                        </span>
-                      </div>
+                  {Object.entries(request.content.payload).length > 0 ? (
+                    Object.entries(request.content.payload).map(
+                      ([key, value]) => (
+                        <div key={key} className="flex hover:bg-neutral-600">
+                          <span>{key}: </span>
+                          <span className="text-blue-500 break-all whitespace-pre-wrap">
+                            {value}
+                          </span>
+                        </div>
+                      )
                     )
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span className="">{"}"}</span>
+                    </div>
                   )}
                 </pre>
               </div>
@@ -206,17 +214,50 @@ export default function RequestPreview() {
             )}
             {tabs[2].active && (
               <div className="break-words">
-                {Object.entries(request.content.session).map(([key, value]) => (
-                  <div key={key} className="flex hover:bg-neutral-600">
-                    <span>{key}: </span>
-                    <span className="text-blue-500 break-all whitespace-pre-wrap">
-                      {value}
-                    </span>
-                  </div>
-                ))}
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.session).length > 0 ? (
+                    Object.entries(request.content.session).map(
+                      ([key, value]) => (
+                        <div key={key} className="flex hover:bg-neutral-600">
+                          <span>{key}: </span>
+                          <span className="text-blue-500 break-all whitespace-pre-wrap">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span>{"}"}</span>
+                    </div>
+                  )}
+                </pre>
               </div>
             )}
-            {tabs[3].active && <div>Response Content</div>}
+            {tabs[3].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(request.content.response).length > 0 ? (
+                    Object.entries(request.content.response).map(
+                      ([key, value]) => (
+                        <div key={key} className="flex hover:bg-neutral-600">
+                          <span>{key}: </span>
+                          <span className="text-blue-500 break-all whitespace-pre-wrap">
+                            {value}
+                          </span>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span>{"}"}</span>
+                    </div>
+                  )}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
       </div>

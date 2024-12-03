@@ -23,16 +23,16 @@ export async function loader() {
 export default function ExceptionsIndex() {
   const { exceptions } = useLoaderData() as { exceptions: ExceptionResponse[] };
 
-  console.log("hit");
+  console.log(exceptions);
 
   return (
     <div className="flex flex-col">
       <div className="bg-white px-4 py-3">
-        <span>Exceptions</span>
+        <span className="font-medium">Exceptions</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
-          <span className="col-span-2">Name</span>
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
+          <span className="col-span-1">Name</span>
           <span className="col-span-2">Message</span>
           <span className="col-span-6">Stack</span>
           <span className="col-span-1">Time</span>
@@ -43,15 +43,19 @@ export default function ExceptionsIndex() {
             {exceptions.map((exception) => (
               <tr
                 key={exception.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
                 <td className="col-span-1">
                   <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
                     {exception.content.name}
                   </span>
                 </td>
-                <td className="col-span-4">{exception.content.message}</td>
-                <td className="col-span-2">{exception.content.stack}</td>
+                <td className="col-span-2 text-ellipsis overflow-hidden">
+                  <span>{exception.content.message}</span>
+                </td>
+                <td className="col-span-6 text-ellipsis overflow-hidden">
+                  <span>{exception.content.stack}</span>
+                </td>
                 <td className="col-span-1">
                   {timeAgo(exception.content.time)}
                 </td>

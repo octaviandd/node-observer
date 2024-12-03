@@ -83,7 +83,7 @@ const httpClientController = new HTTPClientWatcher();
 router.get("/http", (req, res) => {
   httpClientController.getIndex(req, res);
 });
-router.get("/http/:requestId", (req, res) => {
+router.get("/http/:httpId", (req, res) => {
   httpClientController.getView(req, res);
 });
 

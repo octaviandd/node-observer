@@ -27,7 +27,7 @@ export default function SchedulePreview() {
       <div className="flex flex-col shadow-md">
         <div className="">
           <div className="bg-white h-full w-full px-4 py-3">
-            <span>schedule Details</span>
+            <span>Schedule Details</span>
           </div>
         </div>
         <div className="px-3">
@@ -54,14 +54,24 @@ export default function SchedulePreview() {
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Recurrence</div>
               <div className="col-span-8">
-                <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                <span className="font-medium px-2 py-1 rounded-md">
                   {schedule.content.info}
                 </span>
               </div>
             </div>
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Mode</div>
-              <div className="col-span-8">{schedule.content.mode}</div>
+              <div className="col-span-8">
+                <span
+                  className={`px-2 py-1 rounded-md ${
+                    schedule.content.mode === "cancel"
+                      ? "bg-red-300"
+                      : "bg-[#D1FAE4]"
+                  }`}
+                >
+                  {schedule.content.mode}
+                </span>
+              </div>
             </div>
           </div>
         </div>

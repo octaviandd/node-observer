@@ -79,89 +79,87 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
-console.log(os.cpus());
-console.log(os.totalmem());
-console.log(os.freemem());
-
 app.use("/observatory-api/data", routes);
 
 // API routes
 app.get("/", async (req, res) => {
-  // logger.info("Hello World");
-  // logger.warn("Warning");
-  // https
-  //   .get("https://jsonplaceholder.typicode.com/todos/1", (resp) => {
-  //     resp.on("data", () => {});
-  //     resp.on("end", () => {});
-  //   })
-  //   .on("error", (err) => {});
-  // res.send("Hello World");
-  // myCache.set("test", "test");
-  // redis.set("test", "test");
-  // redis.get("test");
-  // const emailQueue = new Queue("emailQueue");
-  // emailQueue.add({
-  //   email: "user@example.com",
-  //   subject: "Welcome!",
-  //   body: "Thanks for signing up!",
-  // });
-  // emailQueue.process(async (job) => {
-  //   console.log("Sending email to:", job.data.email);
-  //   // Simulate sending email
-  //   await sendEmail(job.data.email, job.data.subject, job.data.body);
-  // });
-  // function sendEmail(email: string, subject: string, body: string) {
-  //   return new Promise((resolve) =>
-  //     setTimeout(() => {
-  //       console.log(`Email sent to ${email}`);
-  //       resolve(void 0);
-  //     }, 1000)
-  //   );
-  // }
-  // schedule.scheduleJob("life-universe-everything", "11 * * * *", function () {
-  //   console.log("The answer to life, the universe, and everything!");
-  // });
-  // schedule.cancelJob("life-universe-everything");
-  // pusher.trigger("my-channel", "my-event", {
-  //   message: "hello world",
-  // });
-  // // setTimeout(() => {
-  // //   throw new Error("This is an uncaught exception!");
-  // // }, 1000);
-  // let data = await connection("migrations");
-  // console.log(data);
-  // const eventEmiter = new EventEmitter();
-  // eventEmiter.emit("test");
-  // nodemailer.createTestAccount((err, account) => {
-  //   if (err) {
-  //     console.error("Failed to create a testing account. " + err.message);
-  //     return process.exit(1);
-  //   }
-  //   // Create a SMTP transporter object
-  //   let transporter = nodemailer.createTransport({
-  //     host: account.smtp.host,
-  //     port: account.smtp.port,
-  //     secure: account.smtp.secure,
-  //     auth: {
-  //       user: account.user,
-  //       pass: account.pass,
-  //     },
-  //   });
-  //   // Message object
-  //   let message = {
-  //     from: "<sender@example.com>",
-  //     to: "<recipient@example.com>",
-  //     subject: "Nodemailer is unicode friendly ✔",
-  //     text: "Hello to myself!",
-  //     html: "<p><b>Hello</b> to myself!</p>",
-  //   };
-  //   transporter.sendMail(message, (err, info) => {
-  //     if (err) {
-  //       console.log("Error occurred. " + err.message);
-  //       return process.exit(1);
-  //     }
-  //   });
-  // });
+  logger.info("Hello World");
+  logger.warn("Warning");
+  https
+    .get("https://jsonplaceholder.typicode.com/todos/1", (resp) => {
+      resp.on("data", () => {});
+      resp.on("end", () => {});
+    })
+    .on("error", (err) => {});
+  res.send("Hello World");
+  myCache.set("test", "test");
+  myCache.get("test");
+  redis.set("test", "test");
+  redis.get("test");
+  const emailQueue = new Queue("emailQueue");
+  emailQueue.add({
+    email: "user@example.com",
+    subject: "Welcome!",
+    body: "Thanks for signing up!",
+  });
+  emailQueue.process(async (job) => {
+    console.log("Sending email to:", job.data.email);
+    // Simulate sending email
+    await sendEmail(job.data.email, job.data.subject, job.data.body);
+  });
+  function sendEmail(email: string, subject: string, body: string) {
+    return new Promise((resolve) =>
+      setTimeout(() => {
+        console.log(`Email sent to ${email}`);
+        resolve(void 0);
+      }, 1000)
+    );
+  }
+  schedule.scheduleJob("life-universe-everything", "11 * * * *", function () {
+    console.log("The answer to life, the universe, and everything!");
+  });
+
+  schedule.rescheduleJob("life-universe-everything", "12 * * * *");
+  schedule.cancelJob("life-universe-everything");
+  pusher.trigger("my-channel", "my-event", {
+    message: "hello world",
+  });
+  // setTimeout(() => {
+  //   throw new Error("This is an uncaught exception!");
+  // }, 1000);
+  let data = await connection("migrations");
+  const eventEmiter = new EventEmitter();
+  eventEmiter.emit("test");
+  nodemailer.createTestAccount((err, account) => {
+    if (err) {
+      console.error("Failed to create a testing account. " + err.message);
+      return process.exit(1);
+    }
+    // Create a SMTP transporter object
+    let transporter = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: {
+        user: account.user,
+        pass: account.pass,
+      },
+    });
+    // Message object
+    let message = {
+      from: "<sender@example.com>",
+      to: "<recipient@example.com>",
+      subject: "Nodemailer is unicode friendly ✔",
+      text: "Hello to myself!",
+      html: "<p><b>Hello</b> to myself!</p>",
+    };
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log("Error occurred. " + err.message);
+        return process.exit(1);
+      }
+    });
+  });
 });
 
 const PORT = 9999;

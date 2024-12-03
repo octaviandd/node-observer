@@ -31,9 +31,7 @@ class HTTPClientWatcher implements Watcher {
   public async getIndex(req: Request, res: Response) {
     try {
       const data = await connection("observatory_entries")
-        .where({
-          type: "[http, https]",
-        })
+        .whereIn("type", ["http", "https"])
         .orderBy("created_at", "desc");
       return res.status(200).json(data);
     } catch (error) {
@@ -45,7 +43,7 @@ class HTTPClientWatcher implements Watcher {
   public async getView(req: Request, res: Response) {
     try {
       const data = await connection("observatory_entries")
-        .where({ uuid: req.params.requestId })
+        .where({ uuid: req.params.httpId })
         .first();
       return res.status(200).json(data);
     } catch (error) {

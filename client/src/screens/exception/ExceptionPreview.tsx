@@ -29,13 +29,10 @@ export default function ExceptionPreview() {
       <div className="flex flex-col shadow-md">
         <div className="">
           <div className="bg-white h-full w-full px-4 py-3">
-            <span>exception Details</span>
+            <span>Exception Details</span>
           </div>
         </div>
         <div className="px-3">
-          {/* {isLoading && <div>Loading...</div>}
-        {error && <div>Error loading data</div>}
-        {data && ( */}
           <div className="flex flex-col gap-y-4 py-4">
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Time</div>
@@ -59,7 +56,7 @@ export default function ExceptionPreview() {
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Message</div>
               <div className="col-span-8">
-                <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                <span className="font-medium py-1 rounded-md">
                   {exception.content.message}
                 </span>
               </div>
