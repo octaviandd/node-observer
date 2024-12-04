@@ -20,7 +20,6 @@ import QueryWatcher from "../watchers/QueryWatcher";
 import MailWatcher from "../watchers/MailWatcher";
 import RedisWatcher from "../watchers/RedisWatcher";
 import CacheWatcher from "../watchers/CacheWatcher";
-import CommandWatcher from "../watchers/CommandWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import LogWatcher from "../watchers/LogWatcher";
@@ -34,10 +33,32 @@ const notificationLogger = new NotificationWatcher();
 const mailLogger = new MailWatcher();
 const redisLogger = new RedisWatcher();
 const cacheLogger = new CacheWatcher();
-const commandLogger = new CommandWatcher();
 const queryLogger = new QueryWatcher();
 const httpClientLogger = new HTTPClientWatcher();
 const logLogger = new LogWatcher();
+
+function parseHeaders(headersString: string) {
+  const [startLine, ...headerLines] = headersString.split("\r\n");
+
+  // Parse the start line (HTTP method, path, version)
+  const [method, path, version] = startLine.split(" ");
+
+  // Parse the headers
+  const headers: { [key: string]: string } = {};
+  headerLines.forEach((line) => {
+    const [key, value] = line.split(": ");
+    if (key && value) {
+      headers[key] = value;
+    }
+  });
+
+  return {
+    method,
+    path,
+    version,
+    headers,
+  };
+}
 
 type LoggerType =
   | "event"
@@ -191,7 +212,6 @@ function globalCollector(
   }
 
   const pkg = require(packageName);
-  const { log } = options;
 
   if (packageName === "pusher") {
     const originalTrigger = pkg.prototype.trigger;
@@ -208,33 +228,6 @@ function globalCollector(
     } catch (e) {
       console.error(e);
     }
-  } else if (packageName === "events") {
-    // const originalEmit = pkg.EventEmitter.prototype.emit;
-    // const originalOn = pkg.EventEmitter.prototype.on;
-    // try {
-    //   pkg.EventEmitter.prototype.emit = function (...args: any) {
-    //     eventLogger.addContent({
-    //       eventName: args[0],
-    //       props: args[1],
-    //       time: new Date(),
-    //     });
-    //     return originalEmit.apply(this, args);
-    //   };
-    // } catch (e) {
-    //   console.log(e);
-    // }
-    // try {
-    //   pkg.EventEmitter.prototype.on = function (...args: any) {
-    //     eventLogger.addContent({
-    //       eventName: args[0],
-    //       props: args[1],
-    //       time: new Date(),
-    //     });
-    //     return originalOn.apply(this, args);
-    //   };
-    // } catch (e) {
-    //   console.log(e);
-    // }
   } else if (packageName === "https") {
     const originalRequest = pkg.request;
     const originalGet = pkg.get;
@@ -245,6 +238,8 @@ function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
+          console.log("request https");
+
           const memoryUsage = process.memoryUsage();
           const duration = Date.now() - start;
           httpClientLogger.addContent({
@@ -257,12 +252,10 @@ function globalCollector(
             sockets: req.agent?.sockets || "N/A",
             memoryUsage,
             hostname: req.host,
-            servername: res.servername || "unknown",
             payload: req.body || "N/A",
             protocol: req.agent.protocol,
             options: req.agent?.options || "N/A",
             session: req.session || {},
-            response: req._events.response(),
             headers: req._header,
           });
         });
@@ -279,29 +272,38 @@ function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
-          const duration = Date.now() - start; // Calculate the duration
+          const duration = Date.now() - start;
           const memoryUsage = process.memoryUsage();
 
-          console.log({ getReq: req, getRes: res });
+          let data = "";
+          res.on("data", (chunk: any) => {
+            data += chunk;
+          });
 
-          // Collect and log HTTP details
-          httpClientLogger.addContent({
-            method: req.method,
-            url: req.path,
-            timestamp: new Date(),
-            status: res?.statusCode || req.res.statusCode,
-            duration,
-            ipAddress: req.socket.remoteAddress,
-            sockets: req.agent?.sockets || "N/A",
-            memoryUsage,
-            hostname: req.host,
-            servername: res.servername || "unknown",
-            payload: req.body || "N/A",
-            protocol: req.agent.protocol,
-            options: req.agent?.options || "N/A",
-            session: req.session || {},
-            response: req._events.response(),
-            headers: req._header,
+          res.on("end", () => {
+            const headersObject: { [key: string]: string } = {};
+            for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
+              const key = req.res.rawHeaders[i];
+              const value = req.res.rawHeaders[i + 1];
+              headersObject[key] = value;
+            }
+
+            httpClientLogger.addContent({
+              method: req.method,
+              url: req.path,
+              timestamp: new Date(),
+              status: req.res.statusCode,
+              duration,
+              memoryUsage,
+              hostname: req.host,
+              protocol: req.protocol,
+              options: req.agent?.options || "N/A",
+              session: req.session || {},
+              headers: parseHeaders(req._header),
+              rawHeaders: headersObject,
+              version: req.res.httpVersion,
+              response: JSON.parse(data),
+            });
           });
         });
 
@@ -321,6 +323,7 @@ function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
+          console.log("request http");
           const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
@@ -331,7 +334,7 @@ function globalCollector(
             ipAddress: req.socket.remoteAddress,
             sockets: req.agent?.sockets || "N/A",
             memoryUsage,
-            hostname: req.host,
+            hostname: req.hostname,
             servername: res.servername || "unknown",
             payload: req.body || "N/A",
             protocol: req.agent.protocol,
@@ -355,6 +358,8 @@ function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
+          console.log("get http");
+
           const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
@@ -434,7 +439,7 @@ function globalCollector(
                   ipAddress: req.ip,
                   memoryUsage: process.memoryUsage(),
                   middleware: req.route ? req.route.path : "unknown",
-                  hostname: req.host,
+                  hostname: req.hostname,
                   payload: req.body,
                   session: req.session || {},
                   response: res.locals,
@@ -686,52 +691,6 @@ function globalCollector(
         }
       });
     }
-  } else if (packageName === "mysql2") {
-    // let originalCreateConnection = pkg.createQuery;
-    // let originalRaw = pkg.raw;
-    // let originalQuery: ((...args: any[]) => Promise<any>) | undefined =
-    //   undefined;
-    // console.log(options.connection);
-    // if (options.connection) {
-    //   originalQuery = options.connection.query;
-    //   options.connection.query = function (...args: any) {
-    //     console.log(args);
-    //     queryLogger.addContent({
-    //       query: args[0],
-    //       time: new Date(),
-    //       host: this.config.host,
-    //       database: this.config.database,
-    //     });
-    //     if (originalQuery) {
-    //       return originalQuery.apply(options.connection, args);
-    //     }
-    //     throw new Error("originalQuery is undefined");
-    //   };
-    // }
-    // pkg.raw = function (...args: any) {
-    //   console.log("raw");
-    //   queryLogger.addContent({
-    //     query: args[0],
-    //     time: new Date(),
-    //     host: this.config.host,
-    //     database: this.config.database,
-    //     user: this.config.user,
-    //     port: this.config.port,
-    //   });
-    //   return originalRaw.apply(this, args);
-    // };
-    // pkg.createQuery = function (...args: any) {
-    //   console.log("query");
-    //   queryLogger.addContent({
-    //     query: args[0],
-    //     time: new Date(),
-    //     host: this.config.host,
-    //     database: this.config.database,
-    //     user: this.config.user,
-    //     port: this.config.port,
-    //   });
-    //   return originalCreateConnection.apply(this, args);
-    // };
   }
 
   if (typeof callback === "function") {

@@ -13,8 +13,12 @@ interface HttpResponse {
     session: number;
     response: string;
     timestamp: string;
-    middleware: string;
     duration: number;
+    rawHeaders: string;
+    version: number;
+    options: object;
+    protocol: string;
+    hostname: string;
     memoryUsage: {
       rss: number;
       heapTotal: number;

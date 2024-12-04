@@ -4,21 +4,27 @@ import React, { useEffect, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 import { LoaderFunctionArgs } from "react-router-dom";
 import { timeAgo } from "../../utils";
-
 interface HttpResponse {
   uuid: number;
   content: {
-    method: string;
     url: string;
-    duration: number;
+    method: string;
     status: number;
+    session: number;
+    response: string;
     timestamp: string;
+    duration: number;
+    headers: object;
+    rawHeaders: object;
+    version: number;
+    options: object;
+    protocol: string;
     hostname: string;
-    middleware: string;
-    ipAddress: string;
     memoryUsage: {
-      heapTotal: number;
       rss: number;
+      heapTotal: number;
+      heapUsed: number;
+      external: number;
     };
   };
 }
@@ -34,12 +40,12 @@ export default function HttpPreview() {
   const [tabs, setTabs] = useState([
     {
       id: 0,
-      title: "Payload",
+      title: "Options",
       active: true,
     },
     {
       id: 1,
-      title: "Headers",
+      title: "Raw Headers",
       active: false,
     },
     {
@@ -50,6 +56,11 @@ export default function HttpPreview() {
     {
       id: 3,
       title: "Response",
+      active: false,
+    },
+    {
+      id: 4,
+      title: "Memory Usage",
       active: false,
     },
   ]);
@@ -98,8 +109,8 @@ export default function HttpPreview() {
               <div className="col-span-8">Closure</div>
             </div>
             <div className="grid items-center grid-cols-12">
-              <div className="col-span-4 text-[#5c5f65]">Middleware</div>
-              <div className="col-span-8">{http.content.middleware}</div>
+              <div className="col-span-4 text-[#5c5f65]">Version</div>
+              <div className="col-span-8">{http.content.version}</div>
             </div>
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Path</div>
@@ -126,8 +137,8 @@ export default function HttpPreview() {
               <div className="col-span-8">{http.content.duration}ms</div>
             </div>
             <div className="grid items-center grid-cols-12">
-              <div className="col-span-4 text-[#5c5f65]">IP Address</div>
-              <div className="col-span-8">{http.content.ipAddress}</div>
+              <div className="col-span-4 text-[#5c5f65]">Hostname</div>
+              <div className="col-span-8">{http.content.hostname}</div>
             </div>
             <div className="grid items-center grid-cols-12">
               <div className="col-span-4 text-[#5c5f65]">Memory Usage</div>
@@ -167,8 +178,29 @@ export default function HttpPreview() {
             {tabs[0].active && (
               <div className="break-words">
                 <pre className="pl-6 pr-12">
-                  {Object.entries(request.content.payload).length > 0 ? (
-                    Object.entries(request.content.payload).map(
+                  {Object.entries(http.content.options).length > 0 ? (
+                    Object.entries(http.content.options).map(([key, value]) => (
+                      <div key={key} className="flex hover:bg-neutral-600">
+                        <span>{key}: </span>
+                        <span className="text-blue-500 break-all whitespace-pre-wrap">
+                          {value}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span className="">{"}"}</span>
+                    </div>
+                  )}
+                </pre>
+              </div>
+            )}
+            {tabs[1].active && (
+              <div className="break-words">
+                <pre className="pl-6 pr-12">
+                  {Object.entries(http.content.rawHeaders).length > 0 ? (
+                    Object.entries(http.content.rawHeaders).map(
                       ([key, value]) => (
                         <div key={key} className="flex hover:bg-neutral-600">
                           <span>{key}: </span>
@@ -187,27 +219,32 @@ export default function HttpPreview() {
                 </pre>
               </div>
             )}
-            {tabs[1].active && (
+            {tabs[2].active && (
               <div className="break-words">
                 <pre className="pl-6 pr-12">
-                  {Object.entries(request.content.headers).map(
-                    ([key, value]) => (
+                  {Object.entries(http.content.session).length > 0 ? (
+                    Object.entries(http.content.session).map(([key, value]) => (
                       <div key={key} className="flex hover:bg-neutral-600">
                         <span>{key}: </span>
                         <span className="text-blue-500 break-all whitespace-pre-wrap">
                           {value}
                         </span>
                       </div>
-                    )
+                    ))
+                  ) : (
+                    <div className="flex hover:bg-neutral-600">
+                      <span>{"{"} </span>
+                      <span>{"}"}</span>
+                    </div>
                   )}
                 </pre>
               </div>
             )}
-            {tabs[2].active && (
+            {tabs[3].active && (
               <div className="break-words">
                 <pre className="pl-6 pr-12">
-                  {Object.entries(request.content.session).length > 0 ? (
-                    Object.entries(request.content.session).map(
+                  {Object.entries(http.content.response).length > 0 ? (
+                    Object.entries(http.content.response).map(
                       ([key, value]) => (
                         <div key={key} className="flex hover:bg-neutral-600">
                           <span>{key}: </span>
@@ -226,11 +263,11 @@ export default function HttpPreview() {
                 </pre>
               </div>
             )}
-            {tabs[3].active && (
+            {tabs[4].active && (
               <div className="break-words">
                 <pre className="pl-6 pr-12">
-                  {Object.entries(request.content.response).length > 0 ? (
-                    Object.entries(request.content.response).map(
+                  {Object.entries(http.content.memoryUsage).length > 0 ? (
+                    Object.entries(http.content.memoryUsage).map(
                       ([key, value]) => (
                         <div key={key} className="flex hover:bg-neutral-600">
                           <span>{key}: </span>
