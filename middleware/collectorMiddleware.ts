@@ -207,6 +207,42 @@ function globalCollector(
     return;
   }
 
+  if (packageName === "fetch") {
+    const originalFetch = globalThis.fetch;
+
+    globalThis.fetch = async function (url, options = {}) {
+      const startTime = Date.now();
+
+      const req = new Request(url, options);
+      try {
+        const response = await originalFetch(url, options);
+        const duration = Date.now() - startTime;
+        const memoryUsage = process.memoryUsage();
+
+        const responseCopy = response.clone();
+
+        httpClientLogger.addContent({
+          method: req.method,
+          url: req.url,
+          timestamp: new Date(),
+          status: response.status,
+          duration,
+          memoryUsage,
+          payload: req.body || "N/A",
+          options,
+          headers: Object.fromEntries(response.headers.entries()),
+          response: await responseCopy.json(),
+        });
+
+        return response;
+      } catch (error) {
+        console.error(`Fetch failed:`, error);
+        throw error;
+      }
+    };
+    return;
+  }
+
   if (!isPackageInstalled(packageName)) {
     throw new Error(`Package ${packageName} is not installed`);
   }
@@ -234,32 +270,43 @@ function globalCollector(
 
     try {
       pkg.request = function (...args: any) {
+        console.log(args);
         const req = originalRequest.apply(this, args);
         const start = Date.now();
 
         req.on("response", (res: any) => {
-          console.log("request https");
-
           const memoryUsage = process.memoryUsage();
           const duration = Date.now() - start;
-          httpClientLogger.addContent({
-            method: req.method,
-            url: req.path,
-            timestamp: new Date(),
-            status: res.statusCode,
-            duration,
-            ipAddress: req.socket.remoteAddress,
-            sockets: req.agent?.sockets || "N/A",
-            memoryUsage,
-            hostname: req.host,
-            payload: req.body || "N/A",
-            protocol: req.agent.protocol,
-            options: req.agent?.options || "N/A",
-            session: req.session || {},
-            headers: req._header,
+          let data = "";
+          res.on("data", (chunk: any) => {
+            data += chunk;
+          });
+
+          res.on("end", () => {
+            console.log({ req, res });
+            const headersObject: { [key: string]: string } = {};
+            for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
+              const key = req.res.rawHeaders[i];
+              const value = req.res.rawHeaders[i + 1];
+              headersObject[key] = value;
+            }
+
+            httpClientLogger.addContent({
+              method: req.method,
+              url: req.protocol + "//" + req.host + req.path,
+              timestamp: new Date(),
+              status: req.res.statusCode,
+              duration,
+              memoryUsage,
+              options: args,
+              headers: parseHeaders(req._header),
+              rawHeaders: headersObject,
+              response: JSON.parse(data),
+            });
           });
         });
 
+        req.end();
         return req;
       };
     } catch (e) {
@@ -290,18 +337,14 @@ function globalCollector(
 
             httpClientLogger.addContent({
               method: req.method,
-              url: req.path,
+              url: req.protocol + "//" + req.host + req.path,
               timestamp: new Date(),
               status: req.res.statusCode,
               duration,
               memoryUsage,
-              hostname: req.host,
-              protocol: req.protocol,
-              options: req.agent?.options || "N/A",
-              session: req.session || {},
+              options: args,
               headers: parseHeaders(req._header),
               rawHeaders: headersObject,
-              version: req.res.httpVersion,
               response: JSON.parse(data),
             });
           });
@@ -355,28 +398,42 @@ function globalCollector(
       pkg.get = function (...args: any) {
         const req = originalGet.apply(this, args);
 
+        console.log("hit");
         const start = Date.now();
 
         req.on("response", (res: any) => {
-          console.log("get http");
-
           const duration = Date.now() - start;
-          httpClientLogger.addContent({
-            method: req.method,
-            url: req.path,
-            timestamp: new Date(),
-            status: res?.statusCode || req.res.statusCode,
-            duration: duration,
-            ipAddress: req.ip,
-            memoryUsage: process.memoryUsage(),
-            middleware: "http",
-            controllerAction: "http",
-            hostname: req.hostname,
-            payload: req.body,
-            session: req.session ? req.session.id : "none",
-            response: res.locals || "none",
-            headers: req.headers,
-            body: req.body,
+          const memoryUsage = process.memoryUsage();
+
+          let data = "";
+          res.on("data", (chunk: any) => {
+            data += chunk;
+          });
+
+          res.on("end", () => {
+            const headersObject: { [key: string]: string } = {};
+            for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
+              const key = req.res.rawHeaders[i];
+              const value = req.res.rawHeaders[i + 1];
+              headersObject[key] = value;
+            }
+
+            httpClientLogger.addContent({
+              method: req.method,
+              url: req.path,
+              timestamp: new Date(),
+              status: req.res.statusCode,
+              duration,
+              memoryUsage,
+              hostname: req.host,
+              protocol: req.protocol,
+              options: req.agent?.options || "N/A",
+              session: req.session || {},
+              headers: parseHeaders(req._header),
+              rawHeaders: headersObject,
+              version: req.res.httpVersion,
+              response: JSON.parse(data),
+            });
           });
         });
 
@@ -426,6 +483,12 @@ function globalCollector(
           args[0] = function (req: Request, res: Response, next: NextFunction) {
             const start = Date.now();
 
+            const originalSend = res.send;
+            res.send = function (body: any) {
+              res.locals.responseBody = body;
+              return originalSend.call(this, body);
+            };
+
             res.on("finish", () => {
               const duration = Date.now() - start;
 
@@ -442,7 +505,7 @@ function globalCollector(
                   hostname: req.hostname,
                   payload: req.body,
                   session: req.session || {},
-                  response: res.locals,
+                  response: JSON.parse(res.locals.responseBody)[0],
                   headers: req.headers,
                   body: req.body,
                 });

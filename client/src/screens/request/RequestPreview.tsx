@@ -36,6 +36,7 @@ interface RequestResponse {
 export async function loader({ params }: LoaderFunctionArgs) {
   const data = await fetch(`/api/data/requests/${params.requestId}`);
   const request = await data.json();
+  console.log(request);
   return { request };
 }
 
@@ -238,8 +239,8 @@ export default function RequestPreview() {
             {tabs[3].active && (
               <div className="break-words">
                 <pre className="pl-6 pr-12">
-                  {Object.entries(request.content.response).length > 0 ? (
-                    Object.entries(request.content.response).map(
+                  {Object.entries(request.content.response[0]).length > 0 ? (
+                    Object.entries(request.content.response[0]).map(
                       ([key, value]) => (
                         <div key={key} className="flex hover:bg-neutral-600">
                           <span>{key}: </span>

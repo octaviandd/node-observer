@@ -23,6 +23,17 @@ export async function loader() {
 
 export default function RequestsIndex() {
   const { requests } = useLoaderData() as { requests: RequestResponse[] };
+  const [data, setData] = useState(requests);
+
+  useEffect(() => {
+    setData(requests);
+  }, []);
+
+  const getMoreItems = async () => {
+    const data = await fetch(`/api/data/requests?offset=${requests.length}`);
+    const newRequests = await data.json();
+    setData([...requests, ...newRequests]);
+  };
 
   return (
     <div className="flex flex-col">
@@ -40,10 +51,10 @@ export default function RequestsIndex() {
         </div>
         <table className="w-full">
           <tbody>
-            {requests.map((request) => (
+            {data.map((request) => (
               <tr
                 key={request.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 border-t border-neutral-200 text-sm"
               >
                 <td className="col-span-1">
                   <span className="bg-[#E4E7EB] text-neutral-600 font-medium px-2 rounded-md">
@@ -99,6 +110,16 @@ export default function RequestsIndex() {
             ))}
           </tbody>
         </table>
+        <div className="my-6">
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => getMoreItems()}
+              className="bg-white text-[#488641] font-semibold px-4 py-2 text-sm rounded-md border border-[#488641]"
+            >
+              Load older entries
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

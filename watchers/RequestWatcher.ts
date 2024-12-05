@@ -30,11 +30,18 @@ class RequestWatcher implements Watcher {
   }
 
   public async getIndex(req: Request, res: Response) {
+    let offset = 0;
+    let limit = 20;
+    if (req.query.offset) {
+      offset = parseInt(req.query.offset as string);
+    }
     try {
       const data = await connection("observatory_entries")
         .where({
           type: "request",
         })
+        .limit(limit)
+        .offset(offset)
         .orderBy("created_at", "desc");
       return res.status(200).json(data);
     } catch (error) {

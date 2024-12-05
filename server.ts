@@ -39,6 +39,7 @@ globalCollector("https", { log: true }, (pkg: any) => {});
 globalCollector("winston", { log: true }, (pkg: any) => {});
 globalCollector("bull", { log: true }, (pkg: any) => {});
 globalCollector("agenda", { log: true }, (pkg: any) => {});
+globalCollector("fetch", { log: true }, (pkg: any) => {});
 
 const logger = createLogger({
   level: "info",
@@ -82,18 +83,25 @@ app.use("/observatory-api/data", routes);
 app.get("/", async (req, res) => {
   logger.info("Hello World");
   logger.warn("Warning");
-  https
-    .get("https://jsonplaceholder.typicode.com/todos/1", (resp) => {
-      let data = "";
-      resp.on("data", (chunk) => {
-        data += chunk;
-      });
-      resp.on("end", () => {
-        console.log(data);
-      });
-    })
-    .on("error", (err) => {});
 
+  // const request = https.request("jsonplaceholder.typicode.com", (res) => {
+  //   let responseData = "";
+
+  //   res.on("data", (chunk) => {
+  //     responseData += chunk;
+  //   });
+
+  //   res.on("end", () => {
+  //     console.log("end hit");
+  //     console.log("Response:", JSON.parse(responseData));
+  //   });
+  // });
+
+  // const url = "https://jsonplaceholder.typicode.com/todos/1";
+
+  // fetch(url)
+  //   .then((response) => response.json())
+  //   .then((jsonData) => console.log(jsonData));
   res.send("Hello World");
   // myCache.set("test", "test");
   // myCache.get("test");
@@ -163,6 +171,12 @@ app.get("/", async (req, res) => {
   //     }
   //   });
   // });
+});
+
+app.get("/data", async (req, res) => {
+  connection.raw("SELECT * FROM migrations").then((data) => {
+    res.status(200).json(data);
+  });
 });
 
 const PORT = 9999;
