@@ -492,6 +492,8 @@ function globalCollector(
             res.on("finish", () => {
               const duration = Date.now() - start;
 
+              console.log(JSON.parse(res.locals.responseBody));
+
               if (!req.baseUrl.includes("observatory-api")) {
                 requestLogger.addContent({
                   method: req.method,

@@ -42,8 +42,8 @@ export default function HttpsIndex() {
       <div className="bg-white px-4 py-3">
         <span className="font-medium">HTTPs</span>
       </div>
-      <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
+      <div>
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm gap-1">
           <span className="col-span-1">Verb</span>
           <span className="col-span-6">Path</span>
           <span className="col-span-1">Status</span>
@@ -56,7 +56,7 @@ export default function HttpsIndex() {
             {https.map((http) => (
               <tr
                 key={http.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm gap-1 border-t border-neutral-200"
               >
                 <td className="col-span-1">
                   <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">

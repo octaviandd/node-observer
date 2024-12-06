@@ -31,7 +31,7 @@ export default function NotificationsIndex() {
         <span className="font-medium">Notifications</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm gap-1">
           <span className="col-span-2">Channel</span>
           <span className="col-span-2">Name</span>
           <span className="col-span-6">Value</span>
@@ -46,7 +46,7 @@ export default function NotificationsIndex() {
                 className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
               >
                 <td className="col-span-2">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md gap-1 border-t border-neutral-200">
                     {notification.content.channel}
                   </span>
                 </td>

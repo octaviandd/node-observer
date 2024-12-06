@@ -65,6 +65,18 @@ export default function RequestPreview() {
     },
   ]);
 
+  useEffect(() => {
+    fetch(`/api/data/test`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: "Hello from the client",
+      }),
+    });
+  }, []);
+
   return (
     <div>
       <div className="flex flex-col shadow-md">

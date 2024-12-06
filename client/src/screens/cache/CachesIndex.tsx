@@ -31,7 +31,7 @@ export default function CacheIndex() {
         <span className="font-medium">Cache</span>
       </div>
       <div>
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm gap-1">
           <span className="col-span-2">Key</span>
           <span className="col-span-5">Value</span>
           <span className="col-span-1">Type</span>
@@ -44,7 +44,7 @@ export default function CacheIndex() {
             {caches.map((cache) => (
               <tr
                 key={cache.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm gap-1 border-t border-neutral-200"
               >
                 <td className="col-span-2">
                   <span className="font-medium px-2 py-1 rounded-md">

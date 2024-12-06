@@ -31,9 +31,9 @@ export default function ExceptionsIndex() {
         <span className="font-medium">Exceptions</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
+        <div className="w-full grid grid-cols-12 gap-1 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
           <span className="col-span-1">Name</span>
-          <span className="col-span-2">Message</span>
+          <span className="col-span-3">Message</span>
           <span className="col-span-6">Stack</span>
           <span className="col-span-1">Time</span>
           <span className="col-span-1"></span>
@@ -43,15 +43,15 @@ export default function ExceptionsIndex() {
             {exceptions.map((exception) => (
               <tr
                 key={exception.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm gap-1 border-t border-neutral-200"
               >
                 <td className="col-span-1">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="font-medium rounded-md text-sm">
                     {exception.content.name}
                   </span>
                 </td>
-                <td className="col-span-2 text-ellipsis overflow-hidden">
-                  <span>{exception.content.message}</span>
+                <td className="col-span-3 text-ellipsis overflow-hidden">
+                  <span className="">{exception.content.message}</span>
                 </td>
                 <td className="col-span-6 text-ellipsis overflow-hidden">
                   <span>{exception.content.stack}</span>

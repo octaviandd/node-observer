@@ -173,10 +173,16 @@ app.get("/", async (req, res) => {
   // });
 });
 
-app.get("/data", async (req, res) => {
-  connection.raw("SELECT * FROM migrations").then((data) => {
-    res.status(200).json(data);
-  });
+app.post("/observatory-api/data/test", async (req, res) => {
+  const data = await connection("observatory_entries")
+    .where({
+      type: "request",
+    })
+    .limit(20)
+    .offset(0)
+    .orderBy("created_at", "desc");
+
+  return res.status(200).json(data);
 });
 
 const PORT = 9999;

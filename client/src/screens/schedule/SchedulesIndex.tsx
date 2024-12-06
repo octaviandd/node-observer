@@ -28,7 +28,7 @@ export default function RedisIndex() {
         <span className="font-medium">Schedules</span>
       </div>
       <div>
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] gap-1 px-4 py-3 font-semibold text-sm">
           <span className="col-span-6">Name</span>
           <span className="col-span-1">Mode</span>
           <span className="col-span-2">Recurrence</span>
@@ -40,7 +40,7 @@ export default function RedisIndex() {
             {schedules.map((schedule) => (
               <tr
                 key={schedule.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 gap-1 border-t border-neutral-200"
               >
                 <td className="col-span-6">
                   <span className="font-medium text-sm px-2 py-1 rounded-md">

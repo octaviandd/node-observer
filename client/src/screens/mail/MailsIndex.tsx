@@ -31,7 +31,7 @@ export default function MailsIndex() {
         <span className="font-medium">Mails</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm gap-1">
           <span className="col-span-3">To</span>
           <span className="col-span-2">From</span>
           <span className="col-span-2">Text</span>
@@ -44,7 +44,7 @@ export default function MailsIndex() {
             {mails.map((mail) => (
               <tr
                 key={mail.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm gap-1 border-t border-neutral-200 "
               >
                 <td className="col-span-3">
                   <span className="font-medium px-2 py-1 rounded-md">

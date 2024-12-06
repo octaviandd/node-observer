@@ -31,7 +31,7 @@ export default function LogsIndex() {
         <span>Logs</span>
       </div>
       <div className="bg-[]">
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-semibold text-sm gap-1">
           <span className="col-span-3">Channel</span>
           <span className="col-span-3">Name</span>
           <span className="col-span-2">Value</span>
@@ -43,7 +43,7 @@ export default function LogsIndex() {
             {logs.map((log) => (
               <tr
                 key={log.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 gap-1 border-t border-neutral-200 text-sm"
               >
                 <td className="col-span-3">
                   <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">

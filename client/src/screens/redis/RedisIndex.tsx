@@ -32,7 +32,7 @@ export default function RedisIndex() {
         <span className="font-medium">Redis</span>
       </div>
       <div>
-        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] px-4 py-3 font-medium text-sm">
+        <div className="w-full grid grid-cols-12 bg-[#F3F4F6] gap-1 px-4 py-3 font-medium text-sm">
           <span className="col-span-3">Key</span>
           <span className="col-span-3">Value</span>
           <span className="col-span-1">Type</span>
@@ -46,10 +46,10 @@ export default function RedisIndex() {
             {redis.map((redisRow) => (
               <tr
                 key={redisRow.uuid}
-                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm"
+                className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm gap-1 border-t border-neutral-200"
               >
                 <td className="col-span-3">
-                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md">
+                  <span className="bg-[#E4E7EB] font-medium px-2 py-1 rounded-md ">
                     {redisRow.content.key}
                   </span>
                 </td>
