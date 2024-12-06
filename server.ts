@@ -23,6 +23,8 @@ import https from "https";
 import { createLogger, format, transports } from "winston";
 import Queue from "bull";
 import Agenda from "agenda";
+import { createClient } from "redis";
+import redisStore from "./database/redis";
 import os from "os";
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
@@ -40,6 +42,11 @@ globalCollector("winston", { log: true }, (pkg: any) => {});
 globalCollector("bull", { log: true }, (pkg: any) => {});
 globalCollector("agenda", { log: true }, (pkg: any) => {});
 globalCollector("fetch", { log: true }, (pkg: any) => {});
+globalCollector(
+  "redis",
+  { log: true, connection: redisStore },
+  (pkg: any) => {}
+);
 
 const logger = createLogger({
   level: "info",
@@ -84,6 +91,10 @@ app.get("/", async (req, res) => {
   logger.info("Hello World");
   logger.warn("Warning");
 
+  const redis_store = await redisStore;
+  redis_store.set("test", "test");
+  redis_store.get("test");
+
   // const request = https.request("jsonplaceholder.typicode.com", (res) => {
   //   let responseData = "";
 
@@ -102,7 +113,7 @@ app.get("/", async (req, res) => {
   // fetch(url)
   //   .then((response) => response.json())
   //   .then((jsonData) => console.log(jsonData));
-  res.send("Hello World");
+  res.send({ test: "Hello World" });
   // myCache.set("test", "test");
   // myCache.get("test");
   // redis.set("test", "test");

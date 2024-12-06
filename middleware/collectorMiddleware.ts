@@ -180,7 +180,7 @@ interface GlobalCollectorOptions {
   connection?: any;
 }
 
-function globalCollector(
+async function globalCollector(
   packageName: string,
   options: GlobalCollectorOptions = {},
   callback: any
@@ -283,7 +283,6 @@ function globalCollector(
           });
 
           res.on("end", () => {
-            console.log({ req, res });
             const headersObject: { [key: string]: string } = {};
             for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
               const key = req.res.rawHeaders[i];
@@ -366,7 +365,6 @@ function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
-          console.log("request http");
           const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
@@ -398,7 +396,6 @@ function globalCollector(
       pkg.get = function (...args: any) {
         const req = originalGet.apply(this, args);
 
-        console.log("hit");
         const start = Date.now();
 
         req.on("response", (res: any) => {
@@ -491,8 +488,6 @@ function globalCollector(
 
             res.on("finish", () => {
               const duration = Date.now() - start;
-
-              console.log(JSON.parse(res.locals.responseBody));
 
               if (!req.baseUrl.includes("observatory-api")) {
                 requestLogger.addContent({
@@ -695,6 +690,42 @@ function globalCollector(
       };
     } catch (e) {
       console.error(e);
+    }
+  } else if (packageName === "redis") {
+    if (options.connection) {
+      let redis = await options.connection;
+      const originalSet = redis.set;
+      const originalGet = redis.get;
+
+      try {
+        redis.set = function (...args: any) {
+          redisLogger.addContent({
+            key: args[0],
+            value: args[1],
+            time: new Date(),
+            type: "set",
+            host: this.options.host,
+            db: this.options.db,
+            family: this.options.family,
+            port: this.options.port,
+          });
+          return originalSet.apply(this, args);
+        };
+        redis.get = function (...args: any) {
+          redisLogger.addContent({
+            key: args[0],
+            time: new Date(),
+            type: "get",
+            host: this.options.host,
+            db: this.options.db,
+            family: this.options.family,
+            port: this.options.port,
+          });
+          return originalGet.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
     }
   } else if (packageName === "ioredis") {
     const originalSet = pkg.prototype.set;
