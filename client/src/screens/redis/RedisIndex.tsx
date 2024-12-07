@@ -1,6 +1,6 @@
 /** @format */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
 import { timeAgo } from "../../utils";
 
@@ -24,7 +24,19 @@ export async function loader() {
 
 export default function RedisIndex() {
   const { redis } = useLoaderData() as { redis: RedisResponse[] };
-  console.log(redis);
+  const [offset, setOffset] = useState(0);
+  const [data, setData] = useState(redis);
+
+  useEffect(() => {
+    setData(redis);
+  }, []);
+
+  const getMoreItems = async () => {
+    const data = await fetch(`/api/data/redis?offset=${offset}`);
+    const newRedis = await data.json();
+    setData((prevData) => [...prevData, ...newRedis]);
+    setOffset(offset + 20);
+  };
 
   return (
     <div className="flex flex-col">
@@ -43,7 +55,7 @@ export default function RedisIndex() {
         </div>
         <table className="w-full">
           <tbody>
-            {redis.map((redisRow) => (
+            {data.map((redisRow) => (
               <tr
                 key={redisRow.uuid}
                 className="grid w-full grid-cols-12 py-3 bg-white px-4 text-sm gap-1 border-t border-neutral-200"
@@ -83,6 +95,16 @@ export default function RedisIndex() {
             ))}
           </tbody>
         </table>
+        <div className="my-6">
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => getMoreItems()}
+              className="bg-white text-[#488641] font-semibold px-4 py-2 text-sm rounded-md border border-[#488641]"
+            >
+              Load older entries
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

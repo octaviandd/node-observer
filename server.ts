@@ -22,10 +22,15 @@ import http from "http";
 import https from "https";
 import { createLogger, format, transports } from "winston";
 import Queue from "bull";
-import Agenda from "agenda";
 import { createClient } from "redis";
 import redisStore from "./database/redis";
 import os from "os";
+
+const redis = new Redis({
+  port: 6379, // Redis port
+  host: "127.0.0.1", // Redis host
+  db: 0, // Optional database index
+});
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -33,7 +38,6 @@ globalCollector("nodemailer", { log: true }, (pkg: any) => {});
 globalCollector("express", { log: true }, (pkg: any) => {});
 globalCollector("node-schedule", { log: true }, (pkg: any) => {});
 globalCollector("node-cache", { log: true }, (pkg: any) => {});
-globalCollector("ioredis", { log: true }, (pkg: any) => {});
 globalCollector("commander", { log: true }, (pkg: any) => {});
 globalCollector("knex", { log: true, connection }, (pkg: any) => {});
 globalCollector("http", { log: true }, (pkg: any) => {});
@@ -47,6 +51,7 @@ globalCollector(
   { log: true, connection: redisStore },
   (pkg: any) => {}
 );
+globalCollector("ioredis", { log: true, connection: redis }, (pkg: any) => {});
 
 const logger = createLogger({
   level: "info",
@@ -72,12 +77,6 @@ const pusher = new Pusher({
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 
-const redis = new Redis({
-  port: 6379, // Redis port
-  host: "127.0.0.1", // Redis host
-  db: 0, // Optional database index
-});
-
 const app = express();
 
 app.use(express.json());
@@ -91,9 +90,82 @@ app.get("/", async (req, res) => {
   logger.info("Hello World");
   logger.warn("Warning");
 
+  // await redis.set("car", "toyota");
+
   const redis_store = await redisStore;
   redis_store.set("test", "test");
-  redis_store.get("test");
+  // redis_store.get("test");
+
+  // let fnLookup = [
+  //   "set",
+  //   "get",
+  //   "SET",
+  //   "GET",
+  //   "HSET",
+  //   "hSet",
+  //   "HGET",
+  //   "hGet",
+  //   "HGETALL",
+  //   "hGetAll",
+  //   "del",
+  //   "exists",
+  //   "incr",
+  //   "decr",
+  //   "append",
+  //   "HDEL",
+  //   "HEXISTS",
+  //   "HINCRBY",
+  //   "HLEN",
+  //   "LPUSH",
+  //   "LPOP",
+  //   "LLEN",
+  //   "LINDEX",
+  //   "RPUSH",
+  //   "RPOP",
+  //   "SADD",
+  //   "SREM",
+  //   "SCARD",
+  //   "SMEMBERS",
+  //   "ZADD",
+  //   "ZREM",
+  //   "ZCARD",
+  //   "ZRANGE",
+  //   "ZRANK",
+  //   "ZSCORE",
+  //   "ZREVRANK",
+  //   "ZINCRBY",
+  // ];
+
+  // await redis_store.HSET("test3", "field1", "value1");
+  // await redis_store.HGET("test3", "field1");
+  // await redis_store.HGETALL("test3");
+  // await redis_store.del("test3");
+  // await redis_store.exists("test3");
+  // await redis_store.incr("counter1");
+  // await redis_store.decr("counter1");
+  // await redis_store.append("string1", "appendValue");
+  // await redis_store.HDEL("test3", "field1");
+  // await redis_store.HEXISTS("test3", "field1");
+  // await redis_store.HINCRBY("test3", "field1", 1);
+  // await redis_store.HLEN("test3");
+  // await redis_store.LPUSH("list1", "value1");
+  // await redis_store.LPOP("list1");
+  // await redis_store.LLEN("list1");
+  // await redis_store.LINDEX("list1", 0);
+  // await redis_store.RPUSH("list1", "value2");
+  // await redis_store.RPOP("list1");
+  // await redis_store.SADD("set1", "member1");
+  // await redis_store.SREM("set1", "member1");
+  // await redis_store.SCARD("set1");
+  // await redis_store.SMEMBERS("set1");
+  // await redis_store.ZADD("sortedSet1", { score: 1, value: "member1" });
+  // await redis_store.ZREM("sortedSet1", "member1");
+  // await redis_store.ZCARD("sortedSet1");
+  // await redis_store.ZRANGE("sortedSet1", 0, 1);
+  // await redis_store.ZRANK("sortedSet1", "member1");
+  // await redis_store.ZSCORE("sortedSet1", "member1");
+  // await redis_store.ZREVRANK("sortedSet1", "member1");
+  // await redis_store.ZINCRBY("sortedSet1", 1, "member1");
 
   // const request = https.request("jsonplaceholder.typicode.com", (res) => {
   //   let responseData = "";

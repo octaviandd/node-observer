@@ -24,15 +24,17 @@ export async function loader() {
 export default function RequestsIndex() {
   const { requests } = useLoaderData() as { requests: RequestResponse[] };
   const [data, setData] = useState(requests);
+  const [offset, setOffset] = useState(0);
 
   useEffect(() => {
     setData(requests);
   }, []);
 
   const getMoreItems = async () => {
-    const data = await fetch(`/api/data/requests?offset=${requests.length}`);
+    const data = await fetch(`/api/data/requests?offset=${offset}`);
     const newRequests = await data.json();
-    setData([...requests, ...newRequests]);
+    setData((prevData) => [...prevData, ...newRequests]);
+    setOffset(offset + 20);
   };
 
   return (

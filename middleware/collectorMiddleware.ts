@@ -694,71 +694,161 @@ async function globalCollector(
   } else if (packageName === "redis") {
     if (options.connection) {
       let redis = await options.connection;
-      const originalSet = redis.set;
-      const originalGet = redis.get;
+      const RedisClientProto = redis.__proto__.__proto__;
 
-      try {
-        redis.set = function (...args: any) {
-          redisLogger.addContent({
-            key: args[0],
-            value: args[1],
-            time: new Date(),
-            type: "set",
-            host: this.options.host,
-            db: this.options.db,
-            family: this.options.family,
-            port: this.options.port,
-          });
-          return originalSet.apply(this, args);
+      const commandArgsMapping = {
+        get: ["key"],
+        set: ["key", "value"],
+        GET: ["key"],
+        SET: ["key", "value"],
+        HSET: ["hash", "field", "value"],
+        hSet: ["hash", "field", "value"],
+        HGET: ["hash", "field"],
+        hGet: ["hash", "field"],
+        HGETALL: ["hash"],
+        hGetAll: ["hash"],
+        DEL: ["key"],
+        del: ["key"],
+        EXISTS: ["key"],
+        exists: ["key"],
+        INCR: ["key"],
+        incr: ["key"],
+        DECR: ["key"],
+        decr: ["key"],
+        APPEND: ["key", "value"],
+        append: ["key", "value"],
+        HDEL: ["hash", "field"],
+        hDel: ["hash", "field"],
+        HEXISTS: ["hash", "field"],
+        hExists: ["hash", "field"],
+        HINCRBY: ["hash", "field", "increment"],
+        hIncrBy: ["hash", "field", "increment"],
+        HLEN: ["hash"],
+        hLen: ["hash"],
+        LPUSH: ["key", "value"],
+        lPush: ["key", "value"],
+        LPOP: ["key"],
+        lPop: ["key"],
+        LLEN: ["key"],
+        lLen: ["key"],
+        LINDEX: ["key", "index"],
+        lIndex: ["key", "index"],
+        RPUSH: ["key", "value"],
+        rPush: ["key", "value"],
+        RPOP: ["key"],
+        rPop: ["key"],
+        SADD: ["key", "value"],
+        sAdd: ["key", "value"],
+        SREM: ["key", "value"],
+        sRem: ["key", "value"],
+        SCARD: ["key"],
+        sCard: ["key"],
+        SMEMBERS: ["key"],
+        sMembers: ["key"],
+        ZADD: ["key", "score", "value"],
+        zAdd: ["key", "score", "value"],
+        ZREM: ["key", "value"],
+        zRem: ["key", "value"],
+        ZCARD: ["key"],
+        zCard: ["key"],
+        ZRANGE: ["key", "start", "stop"],
+        zRange: ["key", "start", "stop"],
+        ZRANK: ["key", "member"],
+        zRank: ["key", "member"],
+        ZSCORE: ["key", "member"],
+        zScore: ["key", "member"],
+        ZREVRANK: ["key", "member"],
+        zRevRank: ["key", "member"],
+        ZINCRBY: ["key", "increment", "member"],
+        zIncrBy: ["key", "increment", "member"],
+      };
+
+      for (const key of Object.keys(commandArgsMapping)) {
+        const originalFn = RedisClientProto[key];
+        const argMap =
+          commandArgsMapping[key as keyof typeof commandArgsMapping];
+        const logContent: { [key: string]: any } = {
+          time: new Date(),
+          type: key,
         };
-        redis.get = function (...args: any) {
-          redisLogger.addContent({
-            key: args[0],
-            time: new Date(),
-            type: "get",
-            host: this.options.host,
-            db: this.options.db,
-            family: this.options.family,
-            port: this.options.port,
+
+        RedisClientProto[key] = function (...args: any) {
+          argMap.forEach((arg, index) => {
+            logContent[arg] = args[index];
           });
-          return originalGet.apply(this, args);
+
+          logContent["package"] = "node-redis";
+
+          redisLogger.addContent(logContent);
+          return originalFn.apply(this, args);
         };
-      } catch (e) {
-        console.error(e);
       }
     }
   } else if (packageName === "ioredis") {
-    const originalSet = pkg.prototype.set;
-    const originalGet = pkg.prototype.get;
+    if (options.connection) {
+      const IORedisProto = options.connection.__proto__.__proto__;
 
-    pkg.prototype.set = function (...args: any) {
-      redisLogger.addContent({
-        key: args[0],
-        value: args[1],
-        time: new Date(),
-        type: "set",
-        host: this.options.host,
-        db: this.options.db,
-        family: this.options.family,
-        port: this.options.port,
-      });
+      const commandArgsMapping = {
+        get: ["key"],
+        set: ["key", "value"],
+        hset: ["hash", "field", "value"],
+        hget: ["hash", "field"],
+        hgetall: ["hash"],
+        del: ["key"],
+        exists: ["key"],
+        incr: ["key"],
+        decr: ["key"],
+        append: ["key", "value"],
+        hdel: ["hash", "field"],
+        hexists: ["hash", "field"],
+        hincrby: ["hash", "field", "increment"],
+        hlen: ["hash"],
+        lpush: ["key", "value"],
+        lopo: ["key"],
+        llen: ["key"],
+        lindex: ["key", "index"],
+        rpush: ["key", "value"],
+        rpop: ["key"],
+        sadd: ["key", "value"],
+        srem: ["key", "value"],
+        scard: ["key"],
+        smembers: ["key"],
+        zadd: ["key", "score", "value"],
+        zrem: ["key", "value"],
+        zcard: ["key"],
+        zrange: ["key", "start", "stop"],
+        zrank: ["key", "member"],
+        zscore: ["key", "member"],
+        zrevrank: ["key", "member"],
+        zincrby: ["key", "increment", "member"],
+      };
 
-      return originalSet.apply(this, args);
-    };
+      for (const key of Object.keys(commandArgsMapping)) {
+        const originalFn = IORedisProto[key];
+        const argMap =
+          commandArgsMapping[key as keyof typeof commandArgsMapping];
+        const logContent: { [key: string]: any } = {
+          time: new Date(),
+          type: key,
+        };
 
-    pkg.prototype.get = function (...args: any) {
-      redisLogger.addContent({
-        key: args[0],
-        time: new Date(),
-        type: "get",
-        host: this.options.host,
-        db: this.options.db,
-        family: this.options.family,
-        port: this.options.port,
-      });
+        IORedisProto[key] = function (...args: any) {
+          console.log(this);
+          argMap.forEach((arg, index) => {
+            logContent[arg] = args[index];
+          });
 
-      return originalGet.apply(this, args);
-    };
+          logContent["host"] = this.options.host;
+          logContent["db"] = this.options.db;
+          logContent["family"] = this.options.family;
+          logContent["port"] = this.options.port;
+          logContent["package"] = "ioredis";
+
+          redisLogger.addContent(logContent);
+          return originalFn.apply(this, args);
+        };
+      }
+    }
   } else if (packageName === "knex") {
     if (options.connection) {
       const queryStartTimes: { [key: string]: number } = {};
