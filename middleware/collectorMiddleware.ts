@@ -610,49 +610,52 @@ async function globalCollector(
       console.error(e);
     }
   } else if (packageName === "winston") {
-    const originalError = pkg.error;
-    const originalWarn = pkg.warn;
-    const originalInfo = pkg.info;
-    const originalLog = pkg.log;
+    if (options.connection) {
+      const WinstonLoggerProto = options.connection.__proto__;
+      const originalError = WinstonLoggerProto.error;
+      const originalWarn = WinstonLoggerProto.warn;
+      const originalInfo = WinstonLoggerProto.info;
+      const originalLog = WinstonLoggerProto.log;
 
-    try {
-      pkg.error = function (...args: any) {
-        logLogger.addContent({
-          level: "error",
-          message: args[0],
-          time: new Date(),
-        });
-        return originalError.apply(this, args);
-      };
+      try {
+        WinstonLoggerProto.error = function (...args: any) {
+          logLogger.addContent({
+            level: "error",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalError.apply(this, args);
+        };
 
-      pkg.warn = function (...args: any) {
-        logLogger.addContent({
-          level: "warn",
-          message: args[0],
-          time: new Date(),
-        });
-        return originalWarn.apply(this, args);
-      };
+        WinstonLoggerProto.warn = function (...args: any) {
+          logLogger.addContent({
+            level: "warn",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalWarn.apply(this, args);
+        };
 
-      pkg.info = function (...args: any) {
-        logLogger.addContent({
-          level: "info",
-          message: args[0],
-          time: new Date(),
-        });
-        return originalInfo.apply(this, args);
-      };
+        WinstonLoggerProto.info = function (...args: any) {
+          logLogger.addContent({
+            level: "info",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalInfo.apply(this, args);
+        };
 
-      pkg.log = function (...args: any) {
-        logLogger.addContent({
-          level: "log",
-          message: args[0],
-          time: new Date(),
-        });
-        return originalLog.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
+        WinstonLoggerProto.log = function (...args: any) {
+          logLogger.addContent({
+            level: "log",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalLog.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
     }
   } else if (packageName === "lru-cache") {
     if (options.connection) {
@@ -687,6 +690,10 @@ async function globalCollector(
           console.error(e);
         }
       }
+    }
+  } else if (packageName === "quick-lru") {
+    if (options.connection) {
+      console.log(options.connection);
     }
   } else if (packageName === "node-cache") {
     if (options.connection) {

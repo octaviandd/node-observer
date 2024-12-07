@@ -26,6 +26,7 @@ import { createClient } from "redis";
 import redisStore from "./database/redis";
 import os from "os";
 import { LRUCache } from "lru-cache";
+// import QuickLRU from "quick-lru";
 
 const redis = new Redis({
   port: 6379, // Redis port
@@ -35,6 +36,21 @@ const redis = new Redis({
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 const myLRUCache = new LRUCache({ max: 1000 });
+// const lru = new QuickLRU({ maxSize: 1000 });
+
+const logger = createLogger({
+  level: "info",
+  format: format.combine(
+    format.timestamp(),
+    format.printf(
+      ({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`
+    )
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: "combined.log" }),
+  ],
+});
 
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -50,7 +66,7 @@ globalCollector("commander", { log: true }, (pkg: any) => {});
 globalCollector("knex", { log: true, connection }, (pkg: any) => {});
 globalCollector("http", { log: true }, (pkg: any) => {});
 globalCollector("https", { log: true }, (pkg: any) => {});
-globalCollector("winston", { log: true }, (pkg: any) => {});
+globalCollector("winston", { log: true, connection: logger }, (pkg: any) => {});
 globalCollector("bull", { log: true }, (pkg: any) => {});
 globalCollector("agenda", { log: true }, (pkg: any) => {});
 globalCollector("fetch", { log: true }, (pkg: any) => {});
@@ -65,20 +81,7 @@ globalCollector(
   { log: true, connection: myLRUCache },
   (pkg: any) => {}
 );
-
-const logger = createLogger({
-  level: "info",
-  format: format.combine(
-    format.timestamp(),
-    format.printf(
-      ({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`
-    )
-  ),
-  transports: [
-    new transports.Console(),
-    new transports.File({ filename: "combined.log" }),
-  ],
-});
+// globalCollector("quick-lru", { log: true, connection: lru }, (pkg: any) => {});
 
 const pusher = new Pusher({
   appId: "1900516",
