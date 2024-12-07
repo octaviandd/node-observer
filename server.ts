@@ -25,6 +25,7 @@ import Queue from "bull";
 import { createClient } from "redis";
 import redisStore from "./database/redis";
 import os from "os";
+import { LRUCache } from "lru-cache";
 
 const redis = new Redis({
   port: 6379, // Redis port
@@ -32,12 +33,19 @@ const redis = new Redis({
   db: 0, // Optional database index
 });
 
+const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
+const myLRUCache = new LRUCache({ max: 1000 });
+
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
 globalCollector("nodemailer", { log: true }, (pkg: any) => {});
 globalCollector("express", { log: true }, (pkg: any) => {});
 globalCollector("node-schedule", { log: true }, (pkg: any) => {});
-globalCollector("node-cache", { log: true }, (pkg: any) => {});
+globalCollector(
+  "node-cache",
+  { log: true, connection: myCache },
+  (pkg: any) => {}
+);
 globalCollector("commander", { log: true }, (pkg: any) => {});
 globalCollector("knex", { log: true, connection }, (pkg: any) => {});
 globalCollector("http", { log: true }, (pkg: any) => {});
@@ -52,6 +60,11 @@ globalCollector(
   (pkg: any) => {}
 );
 globalCollector("ioredis", { log: true, connection: redis }, (pkg: any) => {});
+globalCollector(
+  "lru-cache",
+  { log: true, connection: myLRUCache },
+  (pkg: any) => {}
+);
 
 const logger = createLogger({
   level: "info",
@@ -75,8 +88,6 @@ const pusher = new Pusher({
   useTLS: true,
 });
 
-const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
-
 const app = express();
 
 app.use(express.json());
@@ -91,6 +102,9 @@ app.get("/", async (req, res) => {
   logger.warn("Warning");
 
   // await redis.set("car", "toyota");
+
+  myLRUCache.set("test", "test");
+  myLRUCache.get("test");
 
   const redis_store = await redisStore;
   redis_store.set("test", "test");
@@ -186,8 +200,8 @@ app.get("/", async (req, res) => {
   //   .then((response) => response.json())
   //   .then((jsonData) => console.log(jsonData));
   res.send({ test: "Hello World" });
-  // myCache.set("test", "test");
-  // myCache.get("test");
+  myCache.set("test", "test");
+  myCache.get("test");
   // redis.set("test", "test");
   // redis.get("test");
   // const emailQueue = new Queue("emailQueue");

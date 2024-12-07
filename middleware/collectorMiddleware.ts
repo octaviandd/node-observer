@@ -654,42 +654,87 @@ async function globalCollector(
     } catch (e) {
       console.error(e);
     }
+  } else if (packageName === "lru-cache") {
+    if (options.connection) {
+      const LRUCache = options.connection;
+      const commandArgsMapping = {
+        get: ["key"],
+        set: ["key", "value"],
+        has: ["key"],
+      };
+
+      for (const key of Object.keys(commandArgsMapping)) {
+        const originalFn = LRUCache[key];
+        const argMap =
+          commandArgsMapping[key as keyof typeof commandArgsMapping];
+        const logContent: { [key: string]: any } = {
+          time: new Date(),
+          type: key,
+        };
+
+        try {
+          LRUCache[key] = function (...args: any) {
+            argMap.forEach((arg, index) => {
+              logContent[arg] = args[index];
+            });
+
+            logContent["package"] = "lru-cache";
+
+            cacheLogger.addContent(logContent);
+            return originalFn.apply(this, args);
+          };
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
   } else if (packageName === "node-cache") {
-    const originalSet = pkg.prototype.set;
-    const originalGet = pkg.prototype.get;
-
-    try {
-      pkg.prototype.set = function (...args: any) {
-        cacheLogger.addContent({
-          key: args[0],
-          value: args[1],
-          time: new Date(),
-          stdTTL: this.options.stdTTL,
-          deleteOnExpire: this.options.deleteOnExpire,
-          checkPeriod: this.options.checkperiod,
-          stats: this.stats,
-          type: "set",
-        });
-
-        return originalSet.apply(this, args);
+    if (options.connection) {
+      const nodeCacheConnection = options.connection;
+      const commandArgsMapping = {
+        get: ["key"],
+        set: ["key", "value"],
+        mget: ["key"],
+        mset: ["hash", "field", "value"],
+        del: ["key"],
+        take: ["key"],
+        ttl: ["key"],
+        getTtl: ["key"],
+        keys: ["key"],
+        DECR: ["key"],
+        has: ["key"],
+        flushAll: [],
+        flushStats: [],
       };
 
-      pkg.prototype.get = function (...args: any) {
-        cacheLogger.addContent({
-          key: args[0],
-          value: args[1],
+      for (const key of Object.keys(commandArgsMapping)) {
+        const originalFn = nodeCacheConnection[key];
+        const argMap =
+          commandArgsMapping[key as keyof typeof commandArgsMapping];
+        const logContent: { [key: string]: any } = {
           time: new Date(),
-          stdTTL: this.options.stdTTL,
-          deleteOnExpire: this.options.deleteOnExpire,
-          checkPeriod: this.options.checkperiod,
-          stats: this.stats,
-          type: "get",
-        });
+          type: key,
+        };
 
-        return originalGet.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
+        try {
+          nodeCacheConnection[key] = function (...args: any) {
+            argMap.forEach((arg, index) => {
+              logContent[arg] = args[index];
+            });
+
+            logContent["stdTTL"] = this.options.stdTTL;
+            logContent["deleteOnExpire"] = this.options.deleteOnExpire;
+            logContent["checkPeriod"] = this.options.checkperiod;
+            logContent["stats"] = this.stats;
+            logContent["package"] = "node-cache";
+
+            cacheLogger.addContent(logContent);
+            return originalFn.apply(this, args);
+          };
+        } catch (e) {
+          console.error(e);
+        }
+      }
     }
   } else if (packageName === "redis") {
     if (options.connection) {
@@ -833,7 +878,6 @@ async function globalCollector(
         };
 
         IORedisProto[key] = function (...args: any) {
-          console.log(this);
           argMap.forEach((arg, index) => {
             logContent[arg] = args[index];
           });
