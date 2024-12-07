@@ -609,6 +609,219 @@ async function globalCollector(
     } catch (e) {
       console.error(e);
     }
+  } else if (packageName === "log4js") {
+    if (options.connection) {
+      const ProtoLog4js = options.connection.__proto__;
+
+      const originalError = ProtoLog4js.error;
+      const originalWarn = ProtoLog4js.warn;
+      const originalInfo = ProtoLog4js.info;
+      const originalDebug = ProtoLog4js.debug;
+      const originalTrace = ProtoLog4js.trace;
+      const originalFatal = ProtoLog4js.fatal;
+
+      try {
+        ProtoLog4js.error = function (...args: any) {
+          logLogger.addContent({
+            level: "error",
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalError.apply(this, args);
+        };
+
+        ProtoLog4js.warn = function (...args: any) {
+          logLogger.addContent({
+            level: "warn",
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalWarn.apply(this, args);
+        };
+
+        ProtoLog4js.info = function (...args: any) {
+          logLogger.addContent({
+            level: "info",
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalInfo.apply(this, args);
+        };
+
+        ProtoLog4js.debug = function (...args: any) {
+          logLogger.addContent({
+            level: "debug",
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalDebug.apply(this, args);
+        };
+
+        ProtoLog4js.trace = function (...args: any) {
+          logLogger.addContent({
+            level: "trace",
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalTrace.apply(this, args);
+        };
+
+        ProtoLog4js.fatal = function (...args: any) {
+          logLogger.addContent({
+            level: "fatal",
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalFatal.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  } else if (packageName === "pino") {
+    if (options.connection) {
+      const PinoLogger = options.connection;
+
+      const originalError = PinoLogger.error;
+      const originalWarn = PinoLogger.warn;
+      const originalInfo = PinoLogger.info;
+      const originalDebug = PinoLogger.debug;
+      const originalFatal = PinoLogger.fatal;
+
+      try {
+        PinoLogger.error = function (...args: any) {
+          logLogger.addContent({
+            level: "error",
+            package: "pino",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalError.apply(this, args);
+        };
+
+        PinoLogger.warn = function (...args: any) {
+          logLogger.addContent({
+            level: "warn",
+            package: "pino",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalWarn.apply(this, args);
+        };
+
+        PinoLogger.info = function (...args: any) {
+          logLogger.addContent({
+            level: "info",
+            package: "pino",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalInfo.apply(this, args);
+        };
+
+        PinoLogger.debug = function (...args: any) {
+          logLogger.addContent({
+            level: "debug",
+            package: "pino",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalDebug.apply(this, args);
+        };
+
+        PinoLogger.fatal = function (...args: any) {
+          logLogger.addContent({
+            level: "fatal",
+            package: "pino",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalFatal.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  } else if (packageName === "bunyan") {
+    if (options.connection) {
+      const BunyanLoggerProto = options.connection.__proto__;
+      const originalError = BunyanLoggerProto.error;
+      const originalWarn = BunyanLoggerProto.warn;
+      const originalInfo = BunyanLoggerProto.info;
+      const originalDebug = BunyanLoggerProto.debug;
+      const originalFatal = BunyanLoggerProto.fatal;
+      const originalTrace = BunyanLoggerProto.trace;
+
+      try {
+        BunyanLoggerProto.error = function (...args: any) {
+          logLogger.addContent({
+            level: "error",
+            package: "bunyan",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalError.apply(this, args);
+        };
+
+        BunyanLoggerProto.warn = function (...args: any) {
+          logLogger.addContent({
+            level: "warn",
+            package: "bunyan",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalWarn.apply(this, args);
+        };
+
+        BunyanLoggerProto.info = function (...args: any) {
+          logLogger.addContent({
+            level: "info",
+            package: "bunyan",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalInfo.apply(this, args);
+        };
+
+        BunyanLoggerProto.debug = function (...args: any) {
+          logLogger.addContent({
+            level: "debug",
+            package: "bunyan",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalDebug.apply(this, args);
+        };
+
+        BunyanLoggerProto.fatal = function (...args: any) {
+          logLogger.addContent({
+            level: "fatal",
+            package: "bunyan",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalFatal.apply(this, args);
+        };
+
+        BunyanLoggerProto.trace = function (...args: any) {
+          logLogger.addContent({
+            level: "trace",
+            package: "bunyan",
+            message: args[0],
+            time: new Date(),
+          });
+          return originalTrace.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+    }
   } else if (packageName === "winston") {
     if (options.connection) {
       const WinstonLoggerProto = options.connection.__proto__;
@@ -621,6 +834,7 @@ async function globalCollector(
         WinstonLoggerProto.error = function (...args: any) {
           logLogger.addContent({
             level: "error",
+            package: "winston",
             message: args[0],
             time: new Date(),
           });
@@ -630,6 +844,7 @@ async function globalCollector(
         WinstonLoggerProto.warn = function (...args: any) {
           logLogger.addContent({
             level: "warn",
+            package: "winston",
             message: args[0],
             time: new Date(),
           });
@@ -639,6 +854,7 @@ async function globalCollector(
         WinstonLoggerProto.info = function (...args: any) {
           logLogger.addContent({
             level: "info",
+            package: "winston",
             message: args[0],
             time: new Date(),
           });
@@ -648,6 +864,7 @@ async function globalCollector(
         WinstonLoggerProto.log = function (...args: any) {
           logLogger.addContent({
             level: "log",
+            package: "winston",
             message: args[0],
             time: new Date(),
           });

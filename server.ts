@@ -27,6 +27,12 @@ import redisStore from "./database/redis";
 import os from "os";
 import { LRUCache } from "lru-cache";
 // import QuickLRU from "quick-lru";
+import bunyan from "bunyan";
+import pino from "pino";
+import log4js from "log4js";
+
+const pinoLogger = pino();
+const logger4js = log4js.getLogger();
 
 const redis = new Redis({
   port: 6379, // Redis port
@@ -37,6 +43,8 @@ const redis = new Redis({
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 const myLRUCache = new LRUCache({ max: 1000 });
 // const lru = new QuickLRU({ maxSize: 1000 });
+
+const log = bunyan.createLogger({ name: "myapp" });
 
 const logger = createLogger({
   level: "info",
@@ -52,14 +60,25 @@ const logger = createLogger({
   ],
 });
 
+globalCollector("bunyan", { log: true, connection: log }, (pkg: any) => {});
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
 globalCollector("nodemailer", { log: true }, (pkg: any) => {});
 globalCollector("express", { log: true }, (pkg: any) => {});
+globalCollector(
+  "pino",
+  { log: true, connection: pinoLogger },
+  (pkg: any) => {}
+);
 globalCollector("node-schedule", { log: true }, (pkg: any) => {});
 globalCollector(
   "node-cache",
   { log: true, connection: myCache },
+  (pkg: any) => {}
+);
+globalCollector(
+  "log4js",
+  { log: true, connection: logger4js },
   (pkg: any) => {}
 );
 globalCollector("commander", { log: true }, (pkg: any) => {});
@@ -101,8 +120,8 @@ app.use("/observatory-api/data", routes);
 
 // API routes
 app.get("/", async (req, res) => {
-  logger.info("Hello World");
-  logger.warn("Warning");
+  log.info("Hello World bunyan");
+  pinoLogger.info("Hello World pino");
 
   // await redis.set("car", "toyota");
 
@@ -111,6 +130,8 @@ app.get("/", async (req, res) => {
 
   const redis_store = await redisStore;
   redis_store.set("test", "test");
+  logger.debug("Some debug messages");
+  logger4js.info("Some debug messages logger4js");
   // redis_store.get("test");
 
   // let fnLookup = [
