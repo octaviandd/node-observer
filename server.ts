@@ -3,10 +3,8 @@
 import express from "express";
 import { runMigration, rollbackMigration } from "./database/migrate";
 import routes from "./routes/routes";
-import {
-  withObserver,
-  globalCollector,
-} from "./middleware/collectorMiddleware";
+import globalCollector from "./middleware/monkeyPatch";
+import withObserver from "./middleware/wrapper";
 import EventEmitter from "events";
 import schedule from "node-schedule";
 import Redis from "ioredis";
