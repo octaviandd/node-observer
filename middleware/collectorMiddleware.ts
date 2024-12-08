@@ -264,15 +264,202 @@ async function globalCollector(
     } catch (e) {
       console.error(e);
     }
+  } else if (packageName === "axios") {
+    const originalRequest = pkg.request;
+    const originalGet = pkg.get;
+    const originalPost = pkg.post;
+    const originalPut = pkg.put;
+    const originalPatch = pkg.patch;
+    const originalDelete = pkg.delete;
+
+    try {
+      pkg.request = function (...args: any) {
+        const req = originalRequest.apply(this, args);
+        const start = Date.now();
+
+        req.then((res: any) => {
+          const duration = Date.now() - start;
+          const memoryUsage = process.memoryUsage();
+
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.url,
+            timestamp: new Date(),
+            status: res.status,
+            duration,
+            memoryUsage,
+            payload: req.data,
+            options: args,
+            headers: req.headers,
+            response: res.data,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.get = function (...args: any) {
+        const req = originalGet.apply(this, args);
+        const start = Date.now();
+
+        req.then((res: any) => {
+          const duration = Date.now() - start;
+          const memoryUsage = process.memoryUsage();
+
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.url,
+            timestamp: new Date(),
+            status: res.status,
+            duration,
+            memoryUsage,
+            payload: req.data,
+            options: args,
+            headers: req.headers,
+            response: res.data,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.post = function (...args: any) {
+        const req = originalPost.apply(this, args);
+        const start = Date.now();
+
+        req.then((res: any) => {
+          const duration = Date.now() - start;
+          const memoryUsage = process.memoryUsage();
+
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.url,
+            timestamp: new Date(),
+            status: res.status,
+            duration,
+            memoryUsage,
+            payload: req.data,
+            options: args,
+            headers: req.headers,
+            response: res.data,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.put = function (...args: any) {
+        const req = originalPut.apply(this, args);
+        const start = Date.now();
+
+        req.then((res: any) => {
+          const duration = Date.now() - start;
+          const memoryUsage = process.memoryUsage();
+
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.url,
+            timestamp: new Date(),
+            status: res.status,
+            duration,
+            memoryUsage,
+            payload: req.data,
+            options: args,
+            headers: req.headers,
+            response: res.data,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.patch = function (...args: any) {
+        const req = originalPatch.apply(this, args);
+        const start = Date.now();
+
+        req.then((res: any) => {
+          const duration = Date.now() - start;
+          const memoryUsage = process.memoryUsage();
+
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.url,
+            timestamp: new Date(),
+            status: res.status,
+            duration,
+            memoryUsage,
+            payload: req.data,
+            options: args,
+            headers: req.headers,
+            response: res.data,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.delete = function (...args: any) {
+        const req = originalDelete.apply(this, args);
+        const start = Date.now();
+
+        req.then((res: any) => {
+          const duration = Date.now() - start;
+          const memoryUsage = process.memoryUsage();
+
+          httpClientLogger.addContent({
+            method: req.method,
+            url: req.url,
+            timestamp: new Date(),
+            status: res.status,
+            duration,
+            memoryUsage,
+            payload: req.data,
+            options: args,
+            headers: req.headers,
+            response: res.data,
+          });
+        });
+
+        return req;
+      };
+    } catch (e) {
+      console.error(e);
+    }
   } else if (packageName === "https") {
     const originalRequest = pkg.request;
     const originalGet = pkg.get;
 
     try {
       pkg.request = function (...args: any) {
-        console.log(args);
         const req = originalRequest.apply(this, args);
         const start = Date.now();
+
+        const headers = args[0]?.headers || {};
+        if (headers["User-Agent"] && headers["User-Agent"].includes("axios")) {
+          console.log("Axios request detected, skipping custom handling.");
+          req.end();
+          return req; // Exit early for Axios requests
+        }
 
         req.on("response", (res: any) => {
           const memoryUsage = process.memoryUsage();
@@ -318,6 +505,7 @@ async function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
+          console.log("response get https");
           const duration = Date.now() - start;
           const memoryUsage = process.memoryUsage();
 
@@ -365,6 +553,7 @@ async function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
+          console.log("response request http");
           const duration = Date.now() - start;
           httpClientLogger.addContent({
             method: req.method,
@@ -399,6 +588,7 @@ async function globalCollector(
         const start = Date.now();
 
         req.on("response", (res: any) => {
+          console.log("response get http");
           const duration = Date.now() - start;
           const memoryUsage = process.memoryUsage();
 
@@ -910,7 +1100,6 @@ async function globalCollector(
     }
   } else if (packageName === "quick-lru") {
     if (options.connection) {
-      console.log(options.connection);
     }
   } else if (packageName === "node-cache") {
     if (options.connection) {

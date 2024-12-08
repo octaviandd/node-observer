@@ -30,6 +30,8 @@ import { LRUCache } from "lru-cache";
 import bunyan from "bunyan";
 import pino from "pino";
 import log4js from "log4js";
+import sgMail from "@sendgrid/mail";
+import axios from "axios";
 
 const pinoLogger = pino();
 const logger4js = log4js.getLogger();
@@ -60,6 +62,7 @@ const logger = createLogger({
   ],
 });
 
+globalCollector("axios", { log: true }, (pkg: any) => {});
 globalCollector("bunyan", { log: true, connection: log }, (pkg: any) => {});
 globalCollector("exception", { log: true }, (pkg: any) => {});
 globalCollector("pusher", { log: true }, (pkg: any) => {});
@@ -120,18 +123,18 @@ app.use("/observatory-api/data", routes);
 
 // API routes
 app.get("/", async (req, res) => {
-  log.info("Hello World bunyan");
-  pinoLogger.info("Hello World pino");
+  // log.info("Hello World bunyan");
+  // pinoLogger.info("Hello World pino");
 
   // await redis.set("car", "toyota");
 
-  myLRUCache.set("test", "test");
-  myLRUCache.get("test");
+  // myLRUCache.set("test", "test");
+  // myLRUCache.get("test");
 
-  const redis_store = await redisStore;
-  redis_store.set("test", "test");
-  logger.debug("Some debug messages");
-  logger4js.info("Some debug messages logger4js");
+  // const redis_store = await redisStore;
+  // redis_store.set("test", "test");
+  // logger.debug("Some debug messages");
+  // logger4js.info("Some debug messages logger4js");
   // redis_store.get("test");
 
   // let fnLookup = [
@@ -205,20 +208,27 @@ app.get("/", async (req, res) => {
   // await redis_store.ZREVRANK("sortedSet1", "member1");
   // await redis_store.ZINCRBY("sortedSet1", 1, "member1");
 
-  // const request = https.request("jsonplaceholder.typicode.com", (res) => {
-  //   let responseData = "";
+  // const request = https.get(
+  //   "https://jsonplaceholder.typicode.com/todos/1",
+  //   (res) => {
+  //     let responseData = "";
+  //     res.on("data", (chunk) => {
+  //       responseData += chunk;
+  //     });
+  //     res.on("end", () => {
+  //       console.log("end hit");
+  //       console.log("Response:", JSON.parse(responseData));
+  //     });
+  //   }
+  // );
 
-  //   res.on("data", (chunk) => {
-  //     responseData += chunk;
-  //   });
+  await axios
+    .get("https://jsonplaceholder.typicode.com/todos/1")
+    .then((response) => {
+      console.log(response.data);
+    });
 
-  //   res.on("end", () => {
-  //     console.log("end hit");
-  //     console.log("Response:", JSON.parse(responseData));
-  //   });
-  // });
-
-  // const url = "https://jsonplaceholder.typicode.com/todos/1";
+  const url = "https://jsonplaceholder.typicode.com/todos/1";
 
   // fetch(url)
   //   .then((response) => response.json())
