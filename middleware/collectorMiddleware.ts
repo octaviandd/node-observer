@@ -1,4 +1,7 @@
 /** @format */
+
+import { Agenda } from "agenda";
+/** @format */
 declare global {
   namespace Express {
     interface Request {
@@ -724,6 +727,186 @@ async function globalCollector(
       };
     } catch (e) {
       console.error(e);
+    }
+  } else if (packageName === "agenda") {
+    if (options.connection) {
+      const ProtoAgenda = options.connection.__proto__;
+
+      const originalSchedule = ProtoAgenda.schedule;
+      const originalCancel = ProtoAgenda.cancel;
+      const originalCreate = ProtoAgenda.create;
+      const originalPurge = ProtoAgenda.purge;
+      const originalScheduleJob = ProtoAgenda.schedule;
+      const originalNow = ProtoAgenda.now;
+      const originalSaveJob = ProtoAgenda.saveJob;
+
+      try {
+        ProtoAgenda.schedule = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "schedule",
+            package: "agenda",
+          });
+
+          return originalSchedule.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.cancel = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "cancel",
+            package: "agenda",
+          });
+
+          return originalCancel.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.create = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "create",
+            package: "agenda",
+          });
+
+          return originalCreate.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.purge = function (...args: any) {
+          jobLogger.addContent({
+            name: "all",
+            data: args,
+            time: new Date(),
+            mode: "purge",
+            package: "agenda",
+          });
+
+          return originalPurge.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.now = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "now",
+            package: "agenda",
+          });
+
+          return originalNow.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.saveJob = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "save",
+            package: "agenda",
+          });
+
+          return originalSaveJob.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.scheduleJob = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "scheduleJob",
+            package: "agenda",
+          });
+
+          return originalScheduleJob.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.cancel = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "cancel",
+            package: "agenda",
+          });
+
+          return originalCancel.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.create = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: "create",
+            package: "agenda",
+          });
+
+          return originalCreate.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
+
+      try {
+        ProtoAgenda.purge = function (...args: any) {
+          jobLogger.addContent({
+            name: "all",
+            data: args,
+            time: new Date(),
+            mode: "purge",
+            package: "agenda",
+          });
+
+          return originalPurge.apply(this, args);
+        };
+      } catch (e) {
+        console.error(e);
+      }
     }
   } else if (packageName === "bull") {
     const originalProcess = pkg.prototype.process;

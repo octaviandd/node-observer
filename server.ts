@@ -33,6 +33,7 @@ import log4js from "log4js";
 import sgMail from "@sendgrid/mail";
 import axios from "axios";
 import heapdump from "heapdump";
+import Agenda from "agenda";
 
 const pinoLogger = pino();
 const logger4js = log4js.getLogger();
@@ -42,6 +43,10 @@ const redis = new Redis({
   host: "127.0.0.1", // Redis host
   db: 0, // Optional database index
 });
+
+const mongoConnectionString = "mongodb://127.0.0.1/agenda";
+
+const agenda = new Agenda({ db: { address: mongoConnectionString } });
 
 const myCache = new NodeCache({ stdTTL: 100, checkperiod: 120 });
 const myLRUCache = new LRUCache({ max: 1000 });
@@ -92,7 +97,7 @@ globalCollector("http", { log: true }, (pkg: any) => {});
 globalCollector("https", { log: true }, (pkg: any) => {});
 globalCollector("winston", { log: true, connection: logger }, (pkg: any) => {});
 globalCollector("bull", { log: true }, (pkg: any) => {});
-globalCollector("agenda", { log: true }, (pkg: any) => {});
+globalCollector("agenda", { log: true, connection: agenda }, (pkg: any) => {});
 globalCollector("fetch", { log: true }, (pkg: any) => {});
 globalCollector(
   "redis",
@@ -240,25 +245,25 @@ app.get("/", async (req, res) => {
   myCache.set("test", "test");
   myCache.get("test");
 
-  const emailQueue = new Queue("emailQueue");
+  // const emailQueue = new Queue("emailQueue");
 
-  // Add a job to the queue
-  const addEmailJob = async (email: string, subject: string, body: string) => {
-    await emailQueue.add({
-      email,
-      subject,
-      body,
-    });
-    console.log(`Job added to queue for: ${email}`);
-  };
+  // // Add a job to the queue
+  // const addEmailJob = async (email: string, subject: string, body: string) => {
+  //   await emailQueue.add({
+  //     email,
+  //     subject,
+  //     body,
+  //   });
+  //   console.log(`Job added to queue for: ${email}`);
+  // };
 
-  // Simulate adding jobs
-  addEmailJob("user1@example.com", "Welcome!", "Hello, User1!");
-  addEmailJob(
-    "user2@example.com",
-    "Reminder",
-    "Your subscription is expiring."
-  );
+  // // Simulate adding jobs
+  // addEmailJob("user1@example.com", "Welcome!", "Hello, User1!");
+  // addEmailJob(
+  //   "user2@example.com",
+  //   "Reminder",
+  //   "Your subscription is expiring."
+  // );
 
   // queue.add({ task: "Send email" });
   // redis.set("test", "test");
