@@ -32,6 +32,7 @@ import pino from "pino";
 import log4js from "log4js";
 import sgMail from "@sendgrid/mail";
 import axios from "axios";
+import heapdump from "heapdump";
 
 const pinoLogger = pino();
 const logger4js = log4js.getLogger();
@@ -62,6 +63,7 @@ const logger = createLogger({
   ],
 });
 
+globalCollector("heapdump", { log: true }, (pkg: any) => {});
 globalCollector("axios", { log: true }, (pkg: any) => {});
 globalCollector("bunyan", { log: true, connection: log }, (pkg: any) => {});
 globalCollector("exception", { log: true }, (pkg: any) => {});
@@ -123,6 +125,7 @@ app.use("/observatory-api/data", routes);
 
 // API routes
 app.get("/", async (req, res) => {
+  heapdump.writeSnapshot("~/Desktop/" + Date.now() + ".heapsnapshot");
   // log.info("Hello World bunyan");
   // pinoLogger.info("Hello World pino");
 
@@ -236,6 +239,28 @@ app.get("/", async (req, res) => {
   res.send({ test: "Hello World" });
   myCache.set("test", "test");
   myCache.get("test");
+
+  const emailQueue = new Queue("emailQueue");
+
+  // Add a job to the queue
+  const addEmailJob = async (email: string, subject: string, body: string) => {
+    await emailQueue.add({
+      email,
+      subject,
+      body,
+    });
+    console.log(`Job added to queue for: ${email}`);
+  };
+
+  // Simulate adding jobs
+  addEmailJob("user1@example.com", "Welcome!", "Hello, User1!");
+  addEmailJob(
+    "user2@example.com",
+    "Reminder",
+    "Your subscription is expiring."
+  );
+
+  // queue.add({ task: "Send email" });
   // redis.set("test", "test");
   // redis.get("test");
   // const emailQueue = new Queue("emailQueue");

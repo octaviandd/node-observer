@@ -23,6 +23,7 @@ import CacheWatcher from "../watchers/CacheWatcher";
 import ScheduleWatcher from "../watchers/ScheduleWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import LogWatcher from "../watchers/LogWatcher";
+import DumpWatcher from "../watchers/DumpWatcher";
 
 const eventLogger = new EventsWatcher();
 const requestLogger = new RequestWatcher();
@@ -36,6 +37,7 @@ const cacheLogger = new CacheWatcher();
 const queryLogger = new QueryWatcher();
 const httpClientLogger = new HTTPClientWatcher();
 const logLogger = new LogWatcher();
+const dumpLogger = new DumpWatcher();
 
 function parseHeaders(headersString: string) {
   const [startLine, ...headerLines] = headersString.split("\r\n");
@@ -264,6 +266,21 @@ async function globalCollector(
     } catch (e) {
       console.error(e);
     }
+  } else if (packageName === "heapdump") {
+    const originalWriteSnapshot = pkg.writeSnapshot;
+
+    try {
+      pkg.writeSnapshot = function (...args: any) {
+        console.log(args[0]);
+        dumpLogger.addContent({
+          fileName: args[0],
+          time: new Date(),
+        });
+        return originalWriteSnapshot.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
   } else if (packageName === "axios") {
     const originalRequest = pkg.request;
     const originalGet = pkg.get;
@@ -282,15 +299,15 @@ async function globalCollector(
           const memoryUsage = process.memoryUsage();
 
           httpClientLogger.addContent({
-            method: req.method,
-            url: req.url,
+            method: res.request.method,
+            url: res.config.url,
             timestamp: new Date(),
             status: res.status,
             duration,
             memoryUsage,
             payload: req.data,
             options: args,
-            headers: req.headers,
+            headers: res.request._header,
             response: res.data,
           });
         });
@@ -311,15 +328,15 @@ async function globalCollector(
           const memoryUsage = process.memoryUsage();
 
           httpClientLogger.addContent({
-            method: req.method,
-            url: req.url,
+            method: res.request.method,
+            url: res.config.url,
             timestamp: new Date(),
             status: res.status,
             duration,
             memoryUsage,
             payload: req.data,
             options: args,
-            headers: req.headers,
+            headers: res.request._header,
             response: res.data,
           });
         });
@@ -340,15 +357,15 @@ async function globalCollector(
           const memoryUsage = process.memoryUsage();
 
           httpClientLogger.addContent({
-            method: req.method,
-            url: req.url,
+            method: res.request.method,
+            url: res.config.url,
             timestamp: new Date(),
             status: res.status,
             duration,
             memoryUsage,
             payload: req.data,
             options: args,
-            headers: req.headers,
+            headers: res.request._header,
             response: res.data,
           });
         });
@@ -369,15 +386,15 @@ async function globalCollector(
           const memoryUsage = process.memoryUsage();
 
           httpClientLogger.addContent({
-            method: req.method,
-            url: req.url,
+            method: res.request.method,
+            url: res.config.url,
             timestamp: new Date(),
             status: res.status,
             duration,
             memoryUsage,
             payload: req.data,
             options: args,
-            headers: req.headers,
+            headers: res.request._header,
             response: res.data,
           });
         });
@@ -398,15 +415,15 @@ async function globalCollector(
           const memoryUsage = process.memoryUsage();
 
           httpClientLogger.addContent({
-            method: req.method,
-            url: req.url,
+            method: res.request.method,
+            url: res.config.url,
             timestamp: new Date(),
             status: res.status,
             duration,
             memoryUsage,
             payload: req.data,
             options: args,
-            headers: req.headers,
+            headers: res.request._header,
             response: res.data,
           });
         });
@@ -427,15 +444,15 @@ async function globalCollector(
           const memoryUsage = process.memoryUsage();
 
           httpClientLogger.addContent({
-            method: req.method,
-            url: req.url,
+            method: res.request.method,
+            url: res.config.url,
             timestamp: new Date(),
             status: res.status,
             duration,
             memoryUsage,
             payload: req.data,
             options: args,
-            headers: req.headers,
+            headers: res.request._header,
             response: res.data,
           });
         });
@@ -709,30 +726,129 @@ async function globalCollector(
       console.error(e);
     }
   } else if (packageName === "bull") {
-    const originalCreate = pkg.Job.create;
-    const originalRemove = pkg.Job.remove;
+    const originalProcess = pkg.prototype.process;
+    const originalRetryJob = pkg.prototype.retryJob;
+    const originalStartJob = pkg.prototype.start;
+    const originalPauseJob = pkg.prototype.pause;
+    const originalResumeJob = pkg.prototype.resume;
+    const originalProcessJob = pkg.prototype.processJob;
+    const originalAddJob = pkg.prototype.add;
 
     try {
-      pkg.Job.create = function (...args: any) {
+      pkg.prototype.add = function (...args: any) {
+        console.log(this);
+        const job = args[0];
         jobLogger.addContent({
-          job: args[0],
+          name: this.Queue.name,
+          data: args,
           time: new Date(),
+          mode: "add",
+          package: "bull",
         });
 
-        return originalCreate.apply(this, args);
+        return originalAddJob.apply(this, args);
       };
     } catch (e) {
       console.error(e);
     }
 
     try {
-      pkg.Job.remove = function (...args: any) {
+      pkg.prototype.process = function (...args: any) {
+        const job = args[0];
         jobLogger.addContent({
-          job: args[0],
+          name: job.name,
+          data: args,
           time: new Date(),
+          mode: "process",
+          package: "bull",
         });
 
-        return originalRemove.apply(this, args);
+        return originalProcess.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.prototype.retryJob = function (...args: any) {
+        const job = args[0];
+        jobLogger.addContent({
+          name: job.name,
+          data: args,
+          time: new Date(),
+          mode: "retry",
+          package: "bull",
+        });
+
+        return originalRetryJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.prototype.start = function (...args: any) {
+        const job = args[0];
+        jobLogger.addContent({
+          name: job.name,
+          data: args,
+          time: new Date(),
+          mode: "start",
+          package: "bull",
+        });
+
+        return originalStartJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.prototype.pause = function (...args: any) {
+        const job = args[0];
+        jobLogger.addContent({
+          name: job.name,
+          data: args,
+          time: new Date(),
+          mode: "pause",
+          package: "bull",
+        });
+
+        return originalPauseJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.prototype.resume = function (...args: any) {
+        const job = args[0];
+        jobLogger.addContent({
+          name: job.name,
+          data: args,
+          time: new Date(),
+          mode: "resume",
+          package: "bull",
+        });
+
+        return originalResumeJob.apply(this, args);
+      };
+    } catch (e) {
+      console.error(e);
+    }
+
+    try {
+      pkg.prototype.processJob = function (...args: any) {
+        const job = args[0];
+        jobLogger.addContent({
+          name: job.name,
+          data: args,
+          time: new Date(),
+          mode: "processJob",
+          package: "bull",
+        });
+
+        return originalProcessJob.apply(this, args);
       };
     } catch (e) {
       console.error(e);
