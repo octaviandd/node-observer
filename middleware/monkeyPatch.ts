@@ -584,180 +584,33 @@ async function globalCollector(
     if (options.connection) {
       const ProtoAgenda = options.connection.__proto__;
 
-      const originalSchedule = ProtoAgenda.schedule;
-      const originalCancel = ProtoAgenda.cancel;
-      const originalCreate = ProtoAgenda.create;
-      const originalPurge = ProtoAgenda.purge;
-      const originalScheduleJob = ProtoAgenda.schedule;
-      const originalNow = ProtoAgenda.now;
-      const originalSaveJob = ProtoAgenda.saveJob;
-
-      try {
-        ProtoAgenda.schedule = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "schedule",
-            package: "agenda",
-          });
-
-          return originalSchedule.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
+      const FN = {
+        'schedule': ProtoAgenda.schedule,
+        'cancel': ProtoAgenda.cancel,
+        'create': ProtoAgenda.create,
+        'purge': ProtoAgenda.purge,
+        'scheduleJob': ProtoAgenda.scheduleJob,
+        'now': ProtoAgenda.now,
+        'saveJob': ProtoAgenda.saveJob
       }
 
       try {
-        ProtoAgenda.cancel = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "cancel",
-            package: "agenda",
-          });
+        for (const [key, value] of Object.entries(FN)) {
+          ProtoAgenda[key] = function (...args: any) {
+            const job = args[0];
+            jobLogger.addContent({
+              name: job.attrs.name,
+              data: args,
+              time: new Date(),
+              mode: key,
+              package: "agenda",
+            });
 
-          return originalCancel.apply(this, args);
-        };
+            return value.apply(this, args);
+          };
+        }
       } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.create = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "create",
-            package: "agenda",
-          });
-
-          return originalCreate.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.purge = function (...args: any) {
-          jobLogger.addContent({
-            name: "all",
-            data: args,
-            time: new Date(),
-            mode: "purge",
-            package: "agenda",
-          });
-
-          return originalPurge.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.now = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "now",
-            package: "agenda",
-          });
-
-          return originalNow.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.saveJob = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "save",
-            package: "agenda",
-          });
-
-          return originalSaveJob.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.scheduleJob = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "scheduleJob",
-            package: "agenda",
-          });
-
-          return originalScheduleJob.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.cancel = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "cancel",
-            package: "agenda",
-          });
-
-          return originalCancel.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.create = function (...args: any) {
-          const job = args[0];
-          jobLogger.addContent({
-            name: job.attrs.name,
-            data: args,
-            time: new Date(),
-            mode: "create",
-            package: "agenda",
-          });
-
-          return originalCreate.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
-      }
-
-      try {
-        ProtoAgenda.purge = function (...args: any) {
-          jobLogger.addContent({
-            name: "all",
-            data: args,
-            time: new Date(),
-            mode: "purge",
-            package: "agenda",
-          });
-
-          return originalPurge.apply(this, args);
-        };
-      } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     }
   } else if (packageName === "bull") {
@@ -769,124 +622,33 @@ async function globalCollector(
     const originalProcessJob = pkg.prototype.processJob;
     const originalAddJob = pkg.prototype.add;
 
-    try {
-      pkg.prototype.add = function (...args: any) {
-        console.log(this);
-        const job = args[0];
-        jobLogger.addContent({
-          name: this.Queue.name,
-          data: args,
-          time: new Date(),
-          mode: "add",
-          package: "bull",
-        });
-
-        return originalAddJob.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
+    const FN = {
+      'add': originalAddJob,
+      'process': originalProcess,
+      'retry': originalRetryJob,
+      'start': originalStartJob,
+      'pause': originalPauseJob,
+      'resume': originalResumeJob,
+      'processJob': originalProcessJob
     }
 
     try {
-      pkg.prototype.process = function (...args: any) {
-        const job = args[0];
-        jobLogger.addContent({
-          name: job.name,
-          data: args,
-          time: new Date(),
-          mode: "process",
-          package: "bull",
-        });
+      for (const [key, value] of Object.entries(FN)) {
+        pkg.prototype[key] = function (...args: any) {
+          const job = args[0];
+          jobLogger.addContent({
+            name: this.Queue.name,
+            data: args,
+            time: new Date(),
+            mode: key,
+            package: "bull",
+          });
 
-        return originalProcess.apply(this, args);
-      };
+          return value.apply(this, args);
+        };
+      }
     } catch (e) {
-      console.error(e);
-    }
-
-    try {
-      pkg.prototype.retryJob = function (...args: any) {
-        const job = args[0];
-        jobLogger.addContent({
-          name: job.name,
-          data: args,
-          time: new Date(),
-          mode: "retry",
-          package: "bull",
-        });
-
-        return originalRetryJob.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
-    }
-
-    try {
-      pkg.prototype.start = function (...args: any) {
-        const job = args[0];
-        jobLogger.addContent({
-          name: job.name,
-          data: args,
-          time: new Date(),
-          mode: "start",
-          package: "bull",
-        });
-
-        return originalStartJob.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
-    }
-
-    try {
-      pkg.prototype.pause = function (...args: any) {
-        const job = args[0];
-        jobLogger.addContent({
-          name: job.name,
-          data: args,
-          time: new Date(),
-          mode: "pause",
-          package: "bull",
-        });
-
-        return originalPauseJob.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
-    }
-
-    try {
-      pkg.prototype.resume = function (...args: any) {
-        const job = args[0];
-        jobLogger.addContent({
-          name: job.name,
-          data: args,
-          time: new Date(),
-          mode: "resume",
-          package: "bull",
-        });
-
-        return originalResumeJob.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
-    }
-
-    try {
-      pkg.prototype.processJob = function (...args: any) {
-        const job = args[0];
-        jobLogger.addContent({
-          name: job.name,
-          data: args,
-          time: new Date(),
-          mode: "processJob",
-          package: "bull",
-        });
-
-        return originalProcessJob.apply(this, args);
-      };
-    } catch (e) {
-      console.error(e);
+      console.error(e)
     }
   } else if (packageName === "node-schedule") {
     const originalScheduleJob = pkg.scheduleJob;
@@ -954,265 +716,114 @@ async function globalCollector(
     if (options.connection) {
       const ProtoLog4js = options.connection.__proto__;
 
-      const originalError = ProtoLog4js.error;
-      const originalWarn = ProtoLog4js.warn;
-      const originalInfo = ProtoLog4js.info;
-      const originalDebug = ProtoLog4js.debug;
-      const originalTrace = ProtoLog4js.trace;
-      const originalFatal = ProtoLog4js.fatal;
+      const FN = {
+        'error': ProtoLog4js.error,
+        'warn': ProtoLog4js.warn,
+        'info': ProtoLog4js.info,
+        'debug': ProtoLog4js.debug,
+        'trace': ProtoLog4js.trace,
+        'fatal': ProtoLog4js.fatal
+      }
 
       try {
-        ProtoLog4js.error = function (...args: any) {
-          logLogger.addContent({
-            level: "error",
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalError.apply(this, args);
-        };
-
-        ProtoLog4js.warn = function (...args: any) {
-          logLogger.addContent({
-            level: "warn",
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalWarn.apply(this, args);
-        };
-
-        ProtoLog4js.info = function (...args: any) {
-          logLogger.addContent({
-            level: "info",
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalInfo.apply(this, args);
-        };
-
-        ProtoLog4js.debug = function (...args: any) {
-          logLogger.addContent({
-            level: "debug",
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalDebug.apply(this, args);
-        };
-
-        ProtoLog4js.trace = function (...args: any) {
-          logLogger.addContent({
-            level: "trace",
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalTrace.apply(this, args);
-        };
-
-        ProtoLog4js.fatal = function (...args: any) {
-          logLogger.addContent({
-            level: "fatal",
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalFatal.apply(this, args);
-        };
+        for (const [key, value] of Object.entries(FN)) {
+          ProtoLog4js[key] = function (...args: any) {
+            logLogger.addContent({
+              level: key,
+              package: "log4js",
+              message: args[0],
+              time: new Date(),
+            });
+            return value.apply(this, args);
+          };
+        }
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     }
   } else if (packageName === "pino") {
     if (options.connection) {
       const PinoLogger = options.connection;
 
-      const originalError = PinoLogger.error;
-      const originalWarn = PinoLogger.warn;
-      const originalInfo = PinoLogger.info;
-      const originalDebug = PinoLogger.debug;
-      const originalFatal = PinoLogger.fatal;
+
+      const FN = {
+        'error': PinoLogger.error,
+        'warn': PinoLogger.warn,
+        'info': PinoLogger.info,
+        'debug': PinoLogger.debug,
+        'fatal': PinoLogger.fatal
+      }
 
       try {
-        PinoLogger.error = function (...args: any) {
-          logLogger.addContent({
-            level: "error",
-            package: "pino",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalError.apply(this, args);
-        };
-
-        PinoLogger.warn = function (...args: any) {
-          logLogger.addContent({
-            level: "warn",
-            package: "pino",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalWarn.apply(this, args);
-        };
-
-        PinoLogger.info = function (...args: any) {
-          logLogger.addContent({
-            level: "info",
-            package: "pino",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalInfo.apply(this, args);
-        };
-
-        PinoLogger.debug = function (...args: any) {
-          logLogger.addContent({
-            level: "debug",
-            package: "pino",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalDebug.apply(this, args);
-        };
-
-        PinoLogger.fatal = function (...args: any) {
-          logLogger.addContent({
-            level: "fatal",
-            package: "pino",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalFatal.apply(this, args);
-        };
+        for (const [key, value] of Object.entries(FN)) {
+          PinoLogger[key] = function (...args: any) {
+            logLogger.addContent({
+              level: key,
+              package: "pino",
+              message: args[0],
+              time: new Date(),
+            });
+            return value.apply(this, args);
+          };
+        }
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     }
   } else if (packageName === "bunyan") {
     if (options.connection) {
       const BunyanLoggerProto = options.connection.__proto__;
-      const originalError = BunyanLoggerProto.error;
-      const originalWarn = BunyanLoggerProto.warn;
-      const originalInfo = BunyanLoggerProto.info;
-      const originalDebug = BunyanLoggerProto.debug;
-      const originalFatal = BunyanLoggerProto.fatal;
-      const originalTrace = BunyanLoggerProto.trace;
+
+      const FN = {
+        'error': BunyanLoggerProto.error,
+        'warn': BunyanLoggerProto.warn,
+        'info': BunyanLoggerProto.info,
+        'debug': BunyanLoggerProto.debug,
+        'fatal': BunyanLoggerProto.fatal,
+        'trace': BunyanLoggerProto.trace
+      }
 
       try {
-        BunyanLoggerProto.error = function (...args: any) {
-          logLogger.addContent({
-            level: "error",
-            package: "bunyan",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalError.apply(this, args);
-        };
-
-        BunyanLoggerProto.warn = function (...args: any) {
-          logLogger.addContent({
-            level: "warn",
-            package: "bunyan",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalWarn.apply(this, args);
-        };
-
-        BunyanLoggerProto.info = function (...args: any) {
-          logLogger.addContent({
-            level: "info",
-            package: "bunyan",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalInfo.apply(this, args);
-        };
-
-        BunyanLoggerProto.debug = function (...args: any) {
-          logLogger.addContent({
-            level: "debug",
-            package: "bunyan",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalDebug.apply(this, args);
-        };
-
-        BunyanLoggerProto.fatal = function (...args: any) {
-          logLogger.addContent({
-            level: "fatal",
-            package: "bunyan",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalFatal.apply(this, args);
-        };
-
-        BunyanLoggerProto.trace = function (...args: any) {
-          logLogger.addContent({
-            level: "trace",
-            package: "bunyan",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalTrace.apply(this, args);
-        };
+        for (const [key, value] of Object.entries(FN)) {
+          BunyanLoggerProto[key] = function (...args: any) {
+            logLogger.addContent({
+              level: key,
+              package: "bunyan",
+              message: args[0],
+              time: new Date(),
+            });
+            return value.apply(this, args);
+          };
+        }
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     }
   } else if (packageName === "winston") {
     if (options.connection) {
       const WinstonLoggerProto = options.connection.__proto__;
-      const originalError = WinstonLoggerProto.error;
-      const originalWarn = WinstonLoggerProto.warn;
-      const originalInfo = WinstonLoggerProto.info;
-      const originalLog = WinstonLoggerProto.log;
+
+      const FN = {
+        'error': WinstonLoggerProto.error,
+        'warn': WinstonLoggerProto.warn,
+        'info': WinstonLoggerProto.info,
+        'log': WinstonLoggerProto.log
+      }
 
       try {
-        WinstonLoggerProto.error = function (...args: any) {
-          logLogger.addContent({
-            level: "error",
-            package: "winston",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalError.apply(this, args);
-        };
-
-        WinstonLoggerProto.warn = function (...args: any) {
-          logLogger.addContent({
-            level: "warn",
-            package: "winston",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalWarn.apply(this, args);
-        };
-
-        WinstonLoggerProto.info = function (...args: any) {
-          logLogger.addContent({
-            level: "info",
-            package: "winston",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalInfo.apply(this, args);
-        };
-
-        WinstonLoggerProto.log = function (...args: any) {
-          logLogger.addContent({
-            level: "log",
-            package: "winston",
-            message: args[0],
-            time: new Date(),
-          });
-          return originalLog.apply(this, args);
-        };
+        for (const [key, value] of Object.entries(FN)) {
+          WinstonLoggerProto[key] = function (...args: any) {
+            logLogger.addContent({
+              level: key,
+              package: "winston",
+              message: args[0],
+              time: new Date(),
+            });
+            return value.apply(this, args);
+          };
+        }
       } catch (e) {
-        console.error(e);
+        console.error(e)
       }
     }
   } else if (packageName === "lru-cache") {
