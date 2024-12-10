@@ -11,41 +11,59 @@ function isPackageInstalled(npmPackage: string) {
   }
 }
 
+export function fetchMonkeyPatch(logger: any) {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async function (url, options = {}) {
+    const startTime = Date.now();
+
+    const req = new Request(url, options);
+    try {
+      const response = await originalFetch(url, options);
+      const duration = Date.now() - startTime;
+      const memoryUsage = process.memoryUsage();
+
+      const responseCopy = response.clone();
+
+      logger.addContent({
+        method: req.method,
+        url: req.url,
+        timestamp: new Date(),
+        status: response.status,
+        duration,
+        memoryUsage,
+        payload: req.body || "N/A",
+        options,
+        headers: Object.fromEntries(response.headers.entries()),
+        response: await responseCopy.json(),
+      });
+
+      return response;
+    } catch (error) {
+      console.error(`Fetch failed:`, error);
+      throw error;
+    }
+  };
+  return;
+}
+
+export function exceptionMonkeyPatch(loggerInstance: any, errors: any) {
+  const ERROR_TYPES = ["uncaughtException", "unhandledRejection"];
+  ERROR_TYPES.forEach((type) => {
+    process.on(type, (error: Error) => {
+      loggerInstance.addContent({
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        time: new Date(),
+      });
+    });
+  });
+}
+
 export const collector = {
   fetchMonkeyPatch(logger: any) {
-    const originalFetch = globalThis.fetch;
-
-    globalThis.fetch = async function (url, options = {}) {
-      const startTime = Date.now();
-
-      const req = new Request(url, options);
-      try {
-        const response = await originalFetch(url, options);
-        const duration = Date.now() - startTime;
-        const memoryUsage = process.memoryUsage();
-
-        const responseCopy = response.clone();
-
-        logger.addContent({
-          method: req.method,
-          url: req.url,
-          timestamp: new Date(),
-          status: response.status,
-          duration,
-          memoryUsage,
-          payload: req.body || "N/A",
-          options,
-          headers: Object.fromEntries(response.headers.entries()),
-          response: await responseCopy.json(),
-        });
-
-        return response;
-      } catch (error) {
-        console.error(`Fetch failed:`, error);
-        throw error;
-      }
-    };
-    return;
+   
   },
 
   exceptionMonkeyPatch(loggerInstance: any, errors: any) {
@@ -73,6 +91,24 @@ export const collector = {
       switch (mail) {
         case "nodemailer":
           this.nodeMailer(pkg, loggerInstance);
+          break;
+        default:
+          break;
+      }
+    }
+  },
+
+  loggingMonkeyPatch(loggerInstance: any, logging: any) {
+    for (const log of logging) {
+      if (!isPackageInstalled(log.name)) {
+        throw new Error(`Package ${log.name} is not installed`);
+      }
+
+      const pkg = require(log.name);
+
+      switch (log.name) {
+        case "winston":
+          this.winston(pkg, loggerInstance, log.connection);
           break;
         default:
           break;
@@ -181,4 +217,31 @@ export const collector = {
       console.error(e);
     }
   },
+
+  winston(loggerInstance: any, connection: any) {
+    const WinstonLoggerProto = connection.__proto__;
+
+    const FN = {
+      'error': WinstonLoggerProto.error,
+      'warn': WinstonLoggerProto.warn,
+      'info': WinstonLoggerProto.info,
+      'log': WinstonLoggerProto.log
+    }
+
+    try {
+      for (const [key, value] of Object.entries(FN)) {
+        WinstonLoggerProto[key] = function (...args: any) {
+          loggerInstance.addContent({
+            level: key,
+            package: "winston",
+            message: args[0],
+            time: new Date(),
+          });
+          return value.apply(this, args);
+        };
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 };

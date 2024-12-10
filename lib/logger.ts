@@ -9,8 +9,17 @@ import { Client } from "pg";
 import { RedisClientType } from "redis";
 import { Connection } from "mysql2/promise";
 import { collector } from "../middleware/inbuilt/collector";
+import {cachePatch, mailerMonkeyPatch, loggersPatch, notificationPatch, schedulePatch, jobsMonkeyPatch, databasePatch} from "./loggers"
 import LogWatcher from "../watchers/LogWatcher";
 import MailWatcher from "../watchers/MailWatcher";
+import JobWatcher from "../watchers/JobWatcher";
+import ScheduleWatcher from "../watchers/ScheduleWatcher";
+import CacheWatcher from "../watchers/CacheWatcher";
+import NotificationWatcher from "../watchers/NotificationWatcher";
+import RequestWatcher from "../watchers/RequestWatcher";
+import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
+import QueryWatcher from "../watchers/QueryWatcher";
+import { requestPatch } from "./patchers";
 
 async function setupLogger(
   config: any,
@@ -30,27 +39,27 @@ async function setupLogger(
     await mysqlUp(databaseConnection as Connection);
   }
 
-  const errors = config.packages.errors;
-  const logging = config.packages.logging;
-  const database = config.packages.database;
-  const jobs = config.packages.jobs;
-  const scheduler = config.packages.scheduler;
-  const mailer = config.packages.mailer;
-  const cache = config.packages.cache;
-  const notifications = config.packages.notifications;
-  const requests = config.packages.requests;
-  const http = config.packages.http;
+  const errors = config.packages.has("errors");
+  const logging = config.packages.has("logging");
+  const database = config.packages.has("database");
+  const jobs = config.packages.has("jobs");
+  const scheduler = config.packages.has("scheduler");
+  const mailer = config.packages.has("mailer");
+  const cache = config.packages.has("cache");
+  const notifications = config.packages.has("notifications");
+  const requests = config.packages.has("requests");
+  const http = config.packages.has("http");
 
-  errors.length > 0 && initErrors(errors);
-  logging.length > 0 && initLogging(logging);
-  database.length > 0 && initDatabase(database);
-  jobs.length > 0 && initJobs(jobs);
-  scheduler.length > 0 && initScheduler(scheduler);
-  mailer.length > 0 && initMailer(mailer);
-  cache.length > 0 && initCache(cache);
-  notifications.length > 0 && initNotifications(notifications);
-  requests.length > 0 && initRequests(requests);
-  http.length > 0 && initHttp(http);
+  errors && initErrors(errors.name);
+  logging  && initLogging(logging.name);
+  database  && initDatabase(database.name);
+  jobs  && initJobs(jobs.name);
+  scheduler  && initScheduler(scheduler.name);
+  mailer  && initMailer(mailer.name);
+  cache  && initCache(cache.name);
+  notifications  && initNotifications(notifications.name);
+  requests  && initRequests(requests.name);
+  http  && initHttp(http.name);
 
   return "Observatory is ready to use!";
 }
@@ -61,38 +70,55 @@ function initErrors(errors: string[]) {
 }
 
 function initLogging(logging: string[]) {
+  const loggerInstance = new LogWatcher();
+  loggersPatch(loggerInstance, logging);
   return logging;
 }
 
 function initDatabase(database: string[]) {
+  const loggerInstance = new QueryWatcher();
+  databasePatch(loggerInstance, database);
   return database;
 }
 
 function initJobs(jobs: string[]) {
+  const loggerInstance = new JobWatcher()
+  jobsMonkeyPatch(loggerInstance, jobs);
   return jobs;
 }
 
 function initScheduler(scheduler: string[]) {
+  const loggerInstance = new ScheduleWatcher();
+  schedulePatch(loggerInstance, scheduler);
   return scheduler;
 }
 
 function initMailer(mailer: string[]) {
+  const loggerInstance = new MailWatcher()
+  mailerMonkeyPatch(loggerInstance, mailer);
   return mailer;
 }
 
 function initCache(cache: string[]) {
+  const loggerInstance = new CacheWatcher()
+  cachePatch(loggerInstance, cache);
   return cache;
 }
 
 function initNotifications(notifications: string[]) {
+  const loggerInstance = new NotificationWatcher()
+  notificationPatch(loggerInstance, notifications);
   return notifications;
 }
 
 function initRequests(requests: string[]) {
+  const loggerInstance = new RequestWatcher()
+  requestPatch(loggerInstance, requests);
   return requests;
 }
 
 function initHttp(http: string[]) {
+  const loggerInstance = new HTTPClientWatcher()
   return http;
 }
 
