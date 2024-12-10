@@ -21,23 +21,12 @@ import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import QueryWatcher from "../watchers/QueryWatcher";
 import { requestPatch } from "./patchers";
 
-async function setupLogger(
+export async function setupLogger(
   config: any,
   databaseConnection: MongoClient | Client | RedisClientType | Connection
 ): Promise<string> {
-  // decide what database is used to make the migrations
-  // decide whether redis is used or mongodb or any other database
-
   const databaseType = config.database;
-  if (databaseType === "redis") {
-    await redisUp(databaseConnection as RedisClientType);
-  } else if (databaseType === "mongodb") {
-    await mongodbUp(databaseConnection as MongoClient);
-  } else if (databaseType === "postgres") {
-    await postgresUp(databaseConnection as Client);
-  } else if (databaseType === "mysql") {
-    await mysqlUp(databaseConnection as Connection);
-  }
+  setupMigrations(databaseType, databaseConnection);
 
   const errors = config.packages.has("errors");
   const logging = config.packages.has("logging");
@@ -62,6 +51,18 @@ async function setupLogger(
   http  && initHttp(http.name);
 
   return "Observatory is ready to use!";
+}
+
+async function setupMigrations(databaseType: string, databaseConnection: MongoClient | Client | RedisClientType | Connection) {
+  if (databaseType === "redis") {
+    await redisUp(databaseConnection as RedisClientType);
+  } else if (databaseType === "mongodb") {
+    await mongodbUp(databaseConnection as MongoClient);
+  } else if (databaseType === "postgres") {
+    await postgresUp(databaseConnection as Client);
+  } else if (databaseType === "mysql") {
+    await mysqlUp(databaseConnection as Connection);
+  }
 }
 
 function initErrors(errors: string[]) {

@@ -14,7 +14,6 @@ import Pusher from "pusher";
 import { Command } from "commander";
 import knex from "knex";
 import cors from "cors";
-import connection from "./database/connection";
 import mysql2 from "mysql2";
 import http from "http";
 import https from "https";
@@ -90,7 +89,7 @@ globalCollector(
   (pkg: any) => {}
 );
 globalCollector("commander", { log: true }, (pkg: any) => {});
-globalCollector("knex", { log: true, connection }, (pkg: any) => {});
+// globalCollector("knex", { log: true, connection }, (pkg: any) => {});
 globalCollector("http", { log: true }, (pkg: any) => {});
 globalCollector("https", { log: true }, (pkg: any) => {});
 globalCollector("winston", { log: true, connection: logger }, (pkg: any) => {});
@@ -332,17 +331,6 @@ app.get("/", async (req, res) => {
   // });
 });
 
-app.post("/observatory-api/data/test", async (req, res) => {
-  const data = await connection("observatory_entries")
-    .where({
-      type: "request",
-    })
-    .limit(20)
-    .offset(0)
-    .orderBy("created_at", "desc");
-
-  return res.status(200).json(data);
-});
 
 const PORT = 9999;
 

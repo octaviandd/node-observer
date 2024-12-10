@@ -61,23 +61,31 @@ export function exceptionMonkeyPatch(loggerInstance: any, errors: any) {
   });
 }
 
+export function  mailerMonkeyPatch(loggerInstance: any, mailer: any) {
+  for (const mail of mailer) {
+    if (!isPackageInstalled(mail)) {
+      throw new Error(`Package ${mail} is not installed`);
+    }
+
+    const pkg = require(mail);
+
+    switch (mail) {
+      case "nodemailer":
+        // nodeMailer(pkg, loggerInstance);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 export const collector = {
   fetchMonkeyPatch(logger: any) {
    
   },
 
   exceptionMonkeyPatch(loggerInstance: any, errors: any) {
-    const ERROR_TYPES = ["uncaughtException", "unhandledRejection"];
-    ERROR_TYPES.forEach((type) => {
-      process.on(type, (error: Error) => {
-        loggerInstance.addContent({
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-          time: new Date(),
-        });
-      });
-    });
+    
   },
 
   mailerMonkeyPatch(loggerInstance: any, mailer: any) {
@@ -108,7 +116,7 @@ export const collector = {
 
       switch (log.name) {
         case "winston":
-          this.winston(pkg, loggerInstance, log.connection);
+          this.winston(pkg, loggerInstance);
           break;
         default:
           break;

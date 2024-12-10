@@ -13,7 +13,6 @@ import CacheWatcher from "../watchers/CacheWatcher";
 import LogWatcher from "../watchers/LogWatcher";
 import JobWatcher from "../watchers/JobWatcher";
 import connection from "../database/connection";
-import config from "../config/observatory";
 
 const router = Router();
 
@@ -167,13 +166,13 @@ router.post("/monitored-tags/delete", (req, res) => {
 
 // Toggle Recording...
 router.get("/toggle-recording", (req, res) => {
-  config.observatoryPaused = !config.observatoryPaused;
+  // config.observatoryPaused = !config.observatoryPaused;
 
-  return res.status(200).json({
-    message: `Observatory recording is now ${
-      config.observatoryPaused ? "paused" : "enabled"
-    }`,
-  });
+  // return res.status(200).json({
+  //   message: `Observatory recording is now ${
+  //     config.observatoryPaused ? "paused" : "enabled"
+  //   }`,
+  // });
 });
 
 // Clear Entries...

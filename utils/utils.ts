@@ -24,3 +24,18 @@ export const parseHeaders = <T extends Record<string, string>>(
     headers,
   };
 };
+
+
+/*
+ * Check for installed packages
+ * @param npmPackage
+ * @returns @boolean
+ */
+export const isPackageInstalled = (npmPackage: string) => {
+  try {
+    require.resolve(npmPackage);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
