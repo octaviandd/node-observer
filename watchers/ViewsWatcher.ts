@@ -1,19 +1,15 @@
 /** @format */
 
-import connection from "../database/connection";
 import Watcher from "./Watcher";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
 
 class ViewWatcher implements Watcher {
-  type: string;
+  type = "view";
+  constructor(private connection: any) {}
 
-  constructor() {
-    this.type = "view";
-  }
-
-  public async addContent(content: any): Promise<void> {
-    const newEntry = {
+  async addContent(content: any): Promise<void> {
+    const entry = {
       uuid: uuidv4(),
       batch_id: uuidv4(),
       family_hash: uuidv4(),
@@ -21,21 +17,21 @@ class ViewWatcher implements Watcher {
       should_display_on_index: true,
       content: JSON.stringify(content),
     };
-
-    try {
-      await connection("observatory_entries").insert(newEntry);
-    } catch (error) {
-      console.error("Error adding content to ViewWatcher", error);
-    }
+    this.handleContent(entry, "add");
   }
 
-  public async getIndex(req: Request, res: Response) {
+  handleContent(entry: any, action: "add" | "view" | "index", id?: string) {
+    return this.connection("observatory_entries")
+      [action === "add" ? "insert" : action === "view" ? "where" : "orderBy"](
+        action === "add" ? entry : action === "view" ? { uuid: id } : "created_at",
+        action === "index" ? "desc" : undefined
+      )
+      .first();
+  }
+
+  async getIndex(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries")
-        .where({
-          type: "view",
-        })
-        .orderBy("created_at", "desc");
+      const data = await this.handleContent(null, "index");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from ViewWatcher", error);
@@ -43,11 +39,9 @@ class ViewWatcher implements Watcher {
     }
   }
 
-  public async getView(req: Request, res: Response) {
+  async getView(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries")
-        .where({ uuid: req.params.viewId })
-        .first();
+      const data = await this.handleContent(null, "view", req.params.viewId);
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting view from ViewWatcher", error);

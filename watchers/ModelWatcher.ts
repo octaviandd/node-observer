@@ -1,15 +1,16 @@
 /** @format */
 
-import connection from "../database/connection";
 import Watcher from "./Watcher";
 import { v4 as uuidv4 } from "uuid";
 import { Request, Response } from "express";
 
-class ModelWatcher implements Watcher {
-  type: string;
+type ConnectionType = "mysql" | "postgres" | "redis" | "mongodb";
 
-  constructor() {
-    this.type = "model";
+class ModelWatcher implements Watcher {
+  type = "model";
+  private connectionType: ConnectionType;
+  constructor(connectionType: ConnectionType, private connection: any) {
+    this.connectionType = connectionType;
   }
 
   public async addContent(content: any): Promise<void> {
@@ -21,21 +22,56 @@ class ModelWatcher implements Watcher {
       should_display_on_index: true,
       content: JSON.stringify(content),
     };
+    this.handleContent(newEntry, "add");
+  }
 
-    try {
-      await connection("observatory_entries").insert(newEntry);
-    } catch (error) {
-      console.error("Error adding content to ModelWatcher", error);
-    }
+  handleContent(entry: any, action: "add" | "view" | "index", id?: string) {
+    const queries = {
+      mysql: {
+        add: () =>
+          this.connection.query(
+            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES (?, ?, ?, ?, ?, ?)",
+            [entry.uuid, entry.batch_id, entry.family_hash, entry.type, entry.should_display_on_index, entry.content]
+          ),
+        view: () =>
+          this.connection.query("SELECT * FROM observatory_entries WHERE uuid = ?", [id]),
+        index: () =>
+          this.connection.query("SELECT * FROM observatory_entries WHERE type = 'model' ORDER BY created_at DESC"),
+      },
+      postgres: {
+        add: () =>
+          this.connection.query(
+            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES ($1, $2, $3, $4, $5, $6)",
+            [entry.uuid, entry.batch_id, entry.family_hash, entry.type, entry.should_display_on_index, entry.content]
+          ),
+        view: () =>
+          this.connection.query("SELECT * FROM observatory_entries WHERE uuid = $1", [id]),
+        index: () =>
+          this.connection.query("SELECT * FROM observatory_entries WHERE type = 'model' ORDER BY created_at DESC"),
+      },
+      redis: {
+        add: () => this.connection.set(entry.uuid, JSON.stringify(entry)),
+        view: () => this.connection.get(id),
+        index: () => this.connection.keys("*"),
+      },
+      mongodb: {
+        add: () => this.connection.collection("observatory_entries").insertOne(entry),
+        view: () =>
+          this.connection.collection("observatory_entries").findOne({ uuid: id }),
+        index: () =>
+          this.connection
+            .collection("observatory_entries")
+            .find({ type: "model" })
+            .sort({ created_at: -1 })
+            .toArray(),
+      },
+    };
+    return queries[this.connectionType]?.[action]?.();
   }
 
   public async getIndex(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries")
-        .where({
-          type: "model",
-        })
-        .orderBy("created_at", "desc");
+      const data = await this.handleContent(null, "index");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from ModelWatcher", error);
@@ -45,9 +81,7 @@ class ModelWatcher implements Watcher {
 
   public async getView(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries")
-        .where({ uuid: req.params.modelId })
-        .first();
+      const data = await this.handleContent(null, "view", req.params.modelId);
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting view from ModelWatcher", error);

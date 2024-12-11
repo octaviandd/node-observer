@@ -6,11 +6,11 @@ import { Request, Response } from "express";
 type ConnectionType = "mysql" | "postgres" | "redis" | "mongodb";
 
 class CacheWatcher implements Watcher {
+  type = "cache";
   private connectionType: ConnectionType;
   constructor(connectionType: ConnectionType, private connection: any) {
     this.connectionType = connectionType;
   }
-  type = "cache";
 
 
   async addContent(content: any): Promise<void> {
@@ -25,7 +25,7 @@ class CacheWatcher implements Watcher {
     this.handleContent(entry, "add");
   }
 
-  private handleContent(entry: any, action: "add" | "view" | "index", id?: string) {
+  handleContent(entry: any, action: "add" | "view" | "index", id?: string) {
     const queries = {
       mysql: {
         add: () =>
@@ -69,21 +69,21 @@ class CacheWatcher implements Watcher {
     return queries[this.connectionType]?.[action]?.();
   }
 
-  async getIndex(req: Request, res: Response) {
+  async getIndex(req: Request, res: Response): Promise<Response<any, Record<string, any>>> {
     try {
       const data = await this.handleContent(null, "index");
-      res.status(200).json(data);
+      return res.status(200).json(data);
     } catch {
-      res.status(500).json({ error: "Internal Server Error" });
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 
-  async getView(req: Request, res: Response) {
+  async getView(req: Request, res: Response): Promise<Response<any, Record<string, any>>> {
     try {
       const data = await this.handleContent(null, "view", req.params.cacheId);
-      res.status(200).json(data);
+      return res.status(200).json(data);
     } catch {
-      res.status(500).json({ error: "Internal Server Error" });
+      return res.status(500).json({ error: "Internal Server Error" });
     }
   }
 }
