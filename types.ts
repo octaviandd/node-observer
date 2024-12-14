@@ -5,8 +5,8 @@ import { Connection as MySql2Connection } from "mysql2/promise";
 import { Connection as MySqlConnection } from "mysql";
 import { Client } from "pg";
 import { RedisClientType } from "redis";
+import { Knex } from "knex";
 
-type Database = "redis" | "mongodb" | "postgres" | "mysql";
 type Logger = "winston" | "pino" | "bunyan";
 type Scheduler = "node-schedule";
 type Mailer = "nodemailer" | "sendgrid" | "mailgun";
@@ -18,7 +18,6 @@ type Jobs = "bull" | "agenda";
 type Errors = "uncaught" | "unhandled";
 
 export interface config {
-  database: "redis" | "mongodb" | "postgres" | "mysql";
   packages: {
     errors: Errors[];
     logging?: {
@@ -26,7 +25,7 @@ export interface config {
       connection: {} | Function;
     };
     database?: {
-      name: Database[];
+      name: StoreDriver[];
       connection: {} | Function;
     };
     jobs?: Jobs[];
@@ -87,6 +86,13 @@ export type StoreConnection =
   | Client
   | RedisClientType
   | MySqlConnection
-  | MySql2Connection;
+  | MySql2Connection
+  | Knex;
 
-export type StoreDriver = "redis" | "mysql" | "mysql2" | "mongodb" | "postgres";
+export type StoreDriver =
+  | "redis"
+  | "mysql"
+  | "mysql2"
+  | "mongodb"
+  | "postgres"
+  | "knex";

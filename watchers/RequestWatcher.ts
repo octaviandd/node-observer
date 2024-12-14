@@ -38,6 +38,18 @@ class RequestWatcher implements Watcher {
     id?: string
   ): Promise<any> {
     const queries = {
+      knex: {
+        add: () =>
+          (this.storeConnection as any)("observatory_entries").insert(entry),
+        view: () =>
+          (this.storeConnection as any)("observatory_entries")
+            .where({ uuid: id })
+            .first(),
+        index: () =>
+          (this.storeConnection as any)("observatory_entries")
+            .where({ type: "request" })
+            .orderBy("created_at", "desc"),
+      },
       mysql: {
         add: () =>
           (this.storeConnection as MySqlConnection).query(
