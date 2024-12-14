@@ -7,15 +7,15 @@ import { Client } from "pg";
 import { RedisClientType } from "redis";
 import { Knex } from "knex";
 
-type Logger = "winston" | "pino" | "bunyan";
-type Scheduler = "node-schedule";
-type Mailer = "nodemailer" | "sendgrid" | "mailgun";
-type Cache = "redis" | "ioredis" | "node-cache";
-type Notifications = "onesignal" | "firebase" | "pusher";
-type Requests = "express";
-type Http = "axios" | "http" | "https" | "fetch";
-type Jobs = "bull" | "agenda";
-type Errors = "uncaught" | "unhandled";
+export type Logger = "winston" | "pino" | "bunyan";
+export type Scheduler = "node-schedule";
+export type Mailer = "nodemailer" | "sendgrid" | "mailgun";
+export type Cache = "redis" | "ioredis" | "node-cache" | "lru-cache";
+export type Notifications = "onesignal" | "firebase" | "pusher";
+export type Requests = "express";
+export type Http = "axios" | "http" | "https" | "fetch";
+export type Jobs = "bull" | "agenda";
+export type Errors = "uncaught" | "unhandled";
 
 export interface config {
   packages: {

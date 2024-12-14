@@ -1,4 +1,31 @@
-import { nodeMailer, redis, ioRedis, nodeCache, nodeSchedule, lruCache, bunyan, winston, pino, pusher, knex } from "./patchers";
+/** @format */
+
+import {
+  nodeMailerPatcher,
+  redisPatcher,
+  ioRedisPatcher,
+  nodeCachePatcher,
+  nodeSchedulePatcher,
+  lruCachePatcher,
+  bunyanPatcher,
+  winstonPatcher,
+  pinoPatcher,
+  pusherPatcher,
+  knexPatcher,
+  axiosPatcher,
+  bullPatcher,
+  agendaPatcher,
+} from "./patchers";
+import {
+  Errors,
+  Mailer,
+  Logger,
+  Cache,
+  Jobs,
+  Http,
+  Notifications,
+  Scheduler,
+} from "../types";
 
 /**
  * Fetch monkey patch to record fetch requests
@@ -46,9 +73,8 @@ export function fetchMonkeyPatch(logger: any) {
  * @param loggerInstance
  * @param errors
  */
-export function exceptionMonkeyPatch(loggerInstance: any, errors: any) {
-  const ERROR_TYPES = ["uncaughtException", "unhandledRejection"];
-  ERROR_TYPES.forEach((type) => {
+export function exceptionMonkeyPatch(loggerInstance: any, ERRORS: Errors[]) {
+  ERRORS.forEach((type) => {
     process.on(type, (error: Error) => {
       loggerInstance.addContent({
         message: error.message,
@@ -66,7 +92,7 @@ export function exceptionMonkeyPatch(loggerInstance: any, errors: any) {
  * @param mailer
  * @returns @void
  */
-export function mailerMonkeyPatch(loggerInstance: any, mailer: any) {
+export function mailerMonkeyPatch(loggerInstance: any, mailer: Mailer[]) {
   for (const mail of mailer) {
     if (!isPackageInstalled(mail)) {
       throw new Error(`Package ${mail} is not installed`);
@@ -76,7 +102,7 @@ export function mailerMonkeyPatch(loggerInstance: any, mailer: any) {
 
     switch (mail) {
       case "nodemailer":
-        nodeMailer(pkg, loggerInstance);
+        nodeMailerPatcher(pkg, loggerInstance);
         break;
       default:
         break;
@@ -90,25 +116,31 @@ export function mailerMonkeyPatch(loggerInstance: any, mailer: any) {
  * @param cache
  * @returns @void
  */
-export function cachePatch(loggerInstance: any, cache: any) {
-  for (const el of cache.name) {
+export function cachePatch(
+  loggerInstance: any,
+  cache: Cache[],
+  connection: any
+) {
+  for (const el of cache) {
     if (!isPackageInstalled(el)) {
       throw new Error(`Package ${el} is not installed`);
     }
 
-    const pkg = require(cache);
+    const pkg = require(el);
 
-    switch (cache) {
+    switch (el) {
       case "redis":
-        redis(loggerInstance, pkg, cache.connection);
+        redisPatcher(loggerInstance, pkg, connection);
         break;
       case "ioredis":
-        ioRedis(loggerInstance, pkg, cache.connection);
+        ioRedisPatcher(loggerInstance, pkg, connection);
         break;
       case "node-cache":
-       nodeCache(loggerInstance, pkg, cache.connection);
-     case "lru-cache":
-      lruCache(loggerInstance, pkg, cache.connection);
+        nodeCachePatcher(loggerInstance, pkg, connection);
+        break;
+      case "lru-cache":
+        lruCachePatcher(loggerInstance, pkg, connection);
+        break;
       default:
         break;
     }
@@ -121,8 +153,12 @@ export function cachePatch(loggerInstance: any, cache: any) {
  * @param logging
  * @returns @void
  */
-export function loggersPatch(loggerInstance: any, logging: any) {
-  for (const log of logging.name) {
+export function loggersPatch(
+  loggerInstance: any,
+  logging: Logger[],
+  connection: any
+) {
+  for (const log of logging) {
     if (!isPackageInstalled(log)) {
       throw new Error(`Package ${log} is not installed`);
     }
@@ -131,13 +167,14 @@ export function loggersPatch(loggerInstance: any, logging: any) {
 
     switch (log) {
       case "bunyan":
-       bunyan(loggerInstance, pkg, logging.connection);
-      break;
+        bunyanPatcher(loggerInstance, pkg, connection);
+        break;
       case "winston":
-       winston(loggerInstance, pkg, logging.connection);
-       break;
+        winstonPatcher(loggerInstance, pkg, connection);
+        break;
       case "pino":
-       pino(loggerInstance, pkg, logging.connection);
+        pinoPatcher(loggerInstance, pkg, connection);
+        break;
       default:
         break;
     }
@@ -150,7 +187,11 @@ export function loggersPatch(loggerInstance: any, logging: any) {
  * @param jobs
  * @returns @void
  */
-export function jobsMonkeyPatch(loggerInstance: any, jobs: any) {
+export function jobsMonkeyPatch(
+  loggerInstance: any,
+  jobs: Jobs[],
+  connection: any
+) {
   for (const job of jobs) {
     if (!isPackageInstalled(job)) {
       throw new Error(`Package ${job} is not installed`);
@@ -159,8 +200,11 @@ export function jobsMonkeyPatch(loggerInstance: any, jobs: any) {
     const pkg = require(job);
 
     switch (job) {
-      case "node-schedule":
-        nodeSchedule(loggerInstance, pkg, job.connection);
+      case "bull":
+        bullPatcher(loggerInstance, pkg, connection);
+        break;
+      case "agenda":
+        agendaPatcher(loggerInstance, pkg, connection);
         break;
       default:
         break;
@@ -168,7 +212,17 @@ export function jobsMonkeyPatch(loggerInstance: any, jobs: any) {
   }
 }
 
-export function notificationPatch(loggerInstance: any, notifications: any) {
+/**
+ * Monkey patch for notifications to record notifications
+ * @param loggerInstance
+ * @param notifications
+ * @returns @void
+ */
+export function notificationPatch(
+  loggerInstance: any,
+  notifications: Notifications[],
+  connection: any
+) {
   for (const notification of notifications) {
     if (!isPackageInstalled(notification)) {
       throw new Error(`Package ${notification} is not installed`);
@@ -178,7 +232,7 @@ export function notificationPatch(loggerInstance: any, notifications: any) {
 
     switch (notification) {
       case "pusher":
-        pusher(loggerInstance, pkg, notification.connection);
+        pusherPatcher(loggerInstance, pkg, connection);
         break;
       default:
         break;
@@ -186,7 +240,17 @@ export function notificationPatch(loggerInstance: any, notifications: any) {
   }
 }
 
-export function schedulePatch(loggerInstance: any, scheduler: any) {
+/**
+ *  Monkey patch for scheduler to record scheduled tasks
+ * @param loggerInstance
+ * @param scheduler
+ * @returns @void
+ */
+export function schedulePatch(
+  loggerInstance: any,
+  scheduler: Scheduler[],
+  connection: any
+) {
   for (const schedule of scheduler) {
     if (!isPackageInstalled(schedule)) {
       throw new Error(`Package ${schedule} is not installed`);
@@ -196,7 +260,7 @@ export function schedulePatch(loggerInstance: any, scheduler: any) {
 
     switch (schedule) {
       case "node-schedule":
-        nodeSchedule(loggerInstance, pkg, schedule.connection);
+        nodeSchedulePatcher(loggerInstance, pkg, connection);
         break;
       default:
         break;
@@ -204,6 +268,12 @@ export function schedulePatch(loggerInstance: any, scheduler: any) {
   }
 }
 
+/**
+ * Monkey patch for requests to record requests
+ * @param loggerInstance
+ * @param database
+ * @returns @void
+ */
 export function databasePatch(loggerInstance: any, database: any) {
   for (const db of database) {
     if (!isPackageInstalled(db)) {
@@ -214,7 +284,31 @@ export function databasePatch(loggerInstance: any, database: any) {
 
     switch (db) {
       case "knex":
-        knex(loggerInstance, pkg, db.connection);
+        knexPatcher(loggerInstance, pkg, db.connection);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+/**
+ * Monkey patch for http to record http requests
+ * @param loggerInstance
+ * @param http
+ * @returns @void
+ */
+export function httpPatch(loggerInstance: any, http: Http[]) {
+  for (const h of http) {
+    if (!isPackageInstalled(h)) {
+      throw new Error(`Package ${h} is not installed`);
+    }
+
+    const pkg = require(h);
+
+    switch (h) {
+      case "axios":
+        axiosPatcher(loggerInstance, pkg);
         break;
       default:
         break;

@@ -30,12 +30,21 @@ import RequestWatcher from "../watchers/RequestWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import QueryWatcher from "../watchers/QueryWatcher";
 import { requestPatch } from "./patchers";
-import { ConnectionType, ConnectionDriver } from "../types";
+import {
+  Errors,
+  Logger,
+  Mailer,
+  Scheduler,
+  StoreConnection,
+  StoreDriver,
+  Cache,
+  Notifications,
+} from "../types";
 
 export async function setupLogger(
   config: any,
-  driver: ConnectionDriver,
-  connection: ConnectionType
+  driver: StoreDriver,
+  connection: StoreConnection
 ): Promise<string> {
   await setupMigrations(driver, connection);
 
@@ -50,21 +59,21 @@ export async function setupLogger(
   const requests = config.packages.has("requests");
   const http = config.packages.has("http");
 
-  errors && initErrors(errors.name);
-  logging && initLogging(logging.name);
-  database && initDatabase(database.name);
-  jobs && initJobs(jobs.name);
-  scheduler && initScheduler(scheduler.name);
-  mailer && initMailer(mailer.name);
-  cache && initCache(cache.name);
-  notifications && initNotifications(notifications.name);
-  requests && initRequests(requests.name);
-  http && initHttp(http.name);
+  errors && initErrors(errors.name, driver, connection);
+  logging && initLogging(logging.name, driver, connection);
+  database && initDatabase(database.name, driver, connection);
+  jobs && initJobs(jobs.name, driver, connection);
+  scheduler && initScheduler(scheduler.name, driver, connection);
+  mailer && initMailer(mailer.name, driver, connection);
+  cache && initCache(cache.name, driver, connection);
+  notifications && initNotifications(notifications.name, driver, connection);
+  requests && initRequests(requests.name, driver, connection);
+  http && initHttp(http.name, driver, connection);
 
   return "Observatory is ready to use!";
 }
 
-async function setupMigrations(driver: string, connection: ConnectionType) {
+async function setupMigrations(driver: string, connection: StoreConnection) {
   if (driver === "redis") {
     await redisUp(connection as RedisClientType);
   } else if (driver === "mongodb") {
@@ -78,61 +87,101 @@ async function setupMigrations(driver: string, connection: ConnectionType) {
   }
 }
 
-function initErrors(errors: string[]) {
-  const loggerInstance = new LogWatcher();
+function initErrors(
+  errors: Errors[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new LogWatcher(driver, connection);
   collector.exceptionMonkeyPatch(loggerInstance, errors);
 }
 
-function initLogging(logging: string[]) {
-  const loggerInstance = new LogWatcher();
-  loggersPatch(loggerInstance, logging);
+function initLogging(
+  logging: Logger[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new LogWatcher(driver, connection);
+  loggersPatch(loggerInstance, logging, connection);
   return logging;
 }
 
-function initDatabase(database: string[]) {
-  const loggerInstance = new QueryWatcher();
+function initDatabase(
+  database: string[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new QueryWatcher(driver, connection);
   databasePatch(loggerInstance, database);
   return database;
 }
 
-function initJobs(jobs: string[]) {
-  const loggerInstance = new JobWatcher();
+function initJobs(
+  jobs: string[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new JobWatcher(driver, connection);
   jobsMonkeyPatch(loggerInstance, jobs);
   return jobs;
 }
 
-function initScheduler(scheduler: string[]) {
-  const loggerInstance = new ScheduleWatcher();
+function initScheduler(
+  scheduler: Scheduler[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new ScheduleWatcher(driver, connection);
   schedulePatch(loggerInstance, scheduler);
   return scheduler;
 }
 
-function initMailer(mailer: string[]) {
-  const loggerInstance = new MailWatcher();
+function initMailer(
+  mailer: Mailer[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new MailWatcher(driver, connection);
   mailerMonkeyPatch(loggerInstance, mailer);
   return mailer;
 }
 
-function initCache(cache: string[]) {
-  const loggerInstance = new CacheWatcher();
-  cachePatch(loggerInstance, cache);
+function initCache(
+  cache: Cache[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new CacheWatcher(driver, connection);
+  cachePatch(loggerInstance, cache, connection);
   return cache;
 }
 
-function initNotifications(notifications: string[]) {
-  const loggerInstance = new NotificationWatcher();
+function initNotifications(
+  notifications: Notifications[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new NotificationWatcher(driver, connection);
   notificationPatch(loggerInstance, notifications);
   return notifications;
 }
 
-function initRequests(requests: string[]) {
-  const loggerInstance = new RequestWatcher();
+function initRequests(
+  requests: string[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new RequestWatcher(driver, connection);
   requestPatch(loggerInstance, requests);
   return requests;
 }
 
-function initHttp(http: string[]) {
-  const loggerInstance = new HTTPClientWatcher();
+function initHttp(
+  http: string[],
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const loggerInstance = new HTTPClientWatcher(driver, connection);
   return http;
 }
 
