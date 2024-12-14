@@ -3,17 +3,18 @@
 import setupLogger from "./lib/logger";
 import { runMigration, rollbackMigration } from "./database/migrate";
 import { config } from "./types";
-import { RedisClientType } from "redis";
-import { MongoClient } from "mongodb";
-import { Connection } from "mysql2/promise";
-import { Client } from "pg";
+import { ConnectionType, ConnectionDriver } from "./types";
 
-export async function startObservatory(config: config, databaseConnection: MongoClient | Client | RedisClientType | Connection, callback: Function) {
+export async function startObservatory(
+  config: config,
+  driver: ConnectionDriver,
+  connection: ConnectionType,
+  callback: Function
+) {
   // runMigration();
-  await setupLogger(config, databaseConnection);
+  await setupLogger(config, driver, connection);
   console.log("Observatory started with config:", config);
-  callback()
+  callback();
 }
 
-
-export default {startObservatory, rollbackMigration, runMigration};
+export default { startObservatory, rollbackMigration, runMigration };

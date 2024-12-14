@@ -1,17 +1,17 @@
 /** @format */
 
-import * as mysql from "mysql";
+import * as mysql from "mysql2/promise";
 
-export function up(connection: mysql.Connection): void {
+export async function up(connection: mysql.Connection): Promise<void> {
   // Create observatory_monitoring table
-  connection.query(`
+  await connection.execute(`
     CREATE TABLE observatory_monitoring (
       tag VARCHAR(255) PRIMARY KEY
     );
   `);
 
   // Create observatory_entries table
-  connection.query(`
+  await connection.execute(`
     CREATE TABLE observatory_entries (
       sequence BIGINT AUTO_INCREMENT PRIMARY KEY,
       uuid CHAR(36) NOT NULL UNIQUE,
@@ -29,7 +29,7 @@ export function up(connection: mysql.Connection): void {
   `);
 
   // Create observatory_entries_tags table
-  connection.query(`
+  await connection.execute(`
     CREATE TABLE observatory_entries_tags (
       entry_uuid CHAR(36) NOT NULL,
       tag VARCHAR(255) NOT NULL,
@@ -41,7 +41,7 @@ export function up(connection: mysql.Connection): void {
 }
 
 export async function down(connection: mysql.Connection): Promise<void> {
-  connection.query("DROP TABLE IF EXISTS observatory_entries_tags;");
-  connection.query("DROP TABLE IF EXISTS observatory_entries;");
-  connection.query("DROP TABLE IF EXISTS observatory_monitoring;");
+  await connection.execute("DROP TABLE IF EXISTS observatory_entries_tags;");
+  await connection.execute("DROP TABLE IF EXISTS observatory_entries;");
+  await connection.execute("DROP TABLE IF EXISTS observatory_monitoring;");
 }

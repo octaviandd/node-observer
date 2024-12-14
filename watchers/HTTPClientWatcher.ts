@@ -1,15 +1,23 @@
 /** @format */
 
-import connection from "../database/connection";
-import Watcher from "./Watcher";
-import { v4 as uuidv4 } from "uuid";
+import { MongoClient } from "mongodb";
+import { Client as PgClient } from "pg";
+import { RedisClientType } from "redis";
+import type { Connection as MySqlConnection } from "mysql";
+import type { Connection as MySql2Connection } from "mysql2/promise";
 import { Request, Response } from "express";
+import { StoreConnection, StoreDriver } from "../types";
+import { v4 as uuidv4 } from "uuid";
+import Watcher from "./Watcher";
 
 class HTTPClientWatcher implements Watcher {
-  type: string;
+  type = "http";
+  private storeDriver: StoreDriver;
+  private storeConnection: StoreConnection;
 
-  constructor() {
-    this.type = "http";
+  constructor(storeDriver: StoreDriver, storeConnection: StoreConnection) {
+    this.storeDriver = storeDriver;
+    this.storeConnection = storeConnection;
   }
 
   public async addContent(content: any): Promise<void> {
@@ -21,18 +29,136 @@ class HTTPClientWatcher implements Watcher {
       content: JSON.stringify(content),
     };
 
-    try {
-      await connection("observatory_entries").insert(newEntry);
-    } catch (error) {
-      console.error("Error adding content to HTTPClientWatcher", error);
-    }
+    await this.handleContent(newEntry, "add");
+  }
+
+  private async handleContent(
+    entry: any,
+    action: "add" | "view" | "index",
+    id?: string
+  ): Promise<any> {
+    const queries = {
+      mysql: {
+        add: () =>
+          (this.storeConnection as MySqlConnection).query(
+            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, content) VALUES (?, ?, ?, ?, ?)",
+            [
+              entry.uuid,
+              entry.batch_id,
+              entry.family_hash,
+              entry.type,
+              entry.content,
+            ]
+          ),
+        view: () =>
+          (this.storeConnection as MySqlConnection).query(
+            "SELECT * FROM observatory_entries WHERE uuid = ?",
+            [id!]
+          ),
+        index: () =>
+          (this.storeConnection as MySqlConnection).query(
+            "SELECT * FROM observatory_entries WHERE type IN ('http', 'https') ORDER BY created_at DESC"
+          ),
+      },
+      mysql2: {
+        add: () =>
+          (this.storeConnection as MySql2Connection).query(
+            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, content) VALUES (?, ?, ?, ?, ?)",
+            [
+              entry.uuid,
+              entry.batch_id,
+              entry.family_hash,
+              entry.type,
+              entry.content,
+            ]
+          ),
+        view: () =>
+          (this.storeConnection as MySql2Connection).query(
+            "SELECT * FROM observatory_entries WHERE uuid = ?",
+            [id!]
+          ),
+        index: () =>
+          (this.storeConnection as MySql2Connection).query(
+            "SELECT * FROM observatory_entries WHERE type IN ('http', 'https') ORDER BY created_at DESC"
+          ),
+      },
+      postgres: {
+        add: () =>
+          (this.storeConnection as PgClient).query(
+            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, content) VALUES ($1, $2, $3, $4, $5)",
+            [
+              entry.uuid,
+              entry.batch_id,
+              entry.family_hash,
+              entry.type,
+              entry.content,
+            ]
+          ),
+        view: () =>
+          (this.storeConnection as PgClient).query(
+            "SELECT * FROM observatory_entries WHERE uuid = $1",
+            [id!]
+          ),
+        index: () =>
+          (this.storeConnection as PgClient).query(
+            "SELECT * FROM observatory_entries WHERE type IN ('http', 'https') ORDER BY created_at DESC"
+          ),
+      },
+      redis: {
+        add: () =>
+          (this.storeConnection as RedisClientType).set(
+            entry.uuid,
+            JSON.stringify(entry)
+          ),
+        view: async () =>
+          (this.storeConnection as RedisClientType)
+            .get(id!)
+            .then((data) => (data ? JSON.parse(data) : null)),
+        index: async () => {
+          const keys = await (this.storeConnection as RedisClientType).keys(
+            "*"
+          );
+          const entries = [];
+          for (const key of keys) {
+            const val = await (this.storeConnection as RedisClientType).get(
+              key
+            );
+            if (val) {
+              const parsed = JSON.parse(val);
+              if (parsed.type === "http" || parsed.type === "https") {
+                entries.push(parsed);
+              }
+            }
+          }
+          return entries;
+        },
+      },
+      mongodb: {
+        add: () =>
+          (this.storeConnection as MongoClient)
+            .db()
+            .collection("observatory_entries")
+            .insertOne(entry),
+        view: () =>
+          (this.storeConnection as MongoClient)
+            .db()
+            .collection("observatory_entries")
+            .findOne({ uuid: id }),
+        index: () =>
+          (this.storeConnection as MongoClient)
+            .db()
+            .collection("observatory_entries")
+            .find({ type: { $in: ["http", "https"] } })
+            .sort({ created_at: -1 })
+            .toArray(),
+      },
+    };
+    return (await queries[this.storeDriver]?.[action]?.()) as any;
   }
 
   public async getIndex(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries")
-        .whereIn("type", ["http", "https"])
-        .orderBy("created_at", "desc");
+      const data = await this.handleContent(null, "index");
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting index from HTTPClientWatcher", error);
@@ -42,9 +168,7 @@ class HTTPClientWatcher implements Watcher {
 
   public async getView(req: Request, res: Response) {
     try {
-      const data = await connection("observatory_entries")
-        .where({ uuid: req.params.httpId })
-        .first();
+      const data = await this.handleContent(null, "view", req.params.httpId);
       return res.status(200).json(data);
     } catch (error) {
       console.error("Error getting view from HTTPClientWatcher", error);

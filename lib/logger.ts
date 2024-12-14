@@ -1,15 +1,25 @@
 /** @format */
 
 import { up as redisUp } from "../database/migrations/redis_observatory";
+import { up as mysql2Up } from "../database/migrations/mysql2_observatory";
 import { up as mysqlUp } from "../database/migrations/mysql_observatory";
 import { up as postgresUp } from "../database/migrations/postgresql_observatory";
 import { up as mongodbUp } from "../database/migrations/mongo_observatory";
 import { MongoClient } from "mongodb";
 import { Client } from "pg";
 import { RedisClientType } from "redis";
-import { Connection } from "mysql2/promise";
+import { Connection as MySql2Connection } from "mysql2/promise";
+import { Connection as MySqlConnection } from "mysql";
 import { collector } from "../middleware/inbuilt/collector";
-import {cachePatch, mailerMonkeyPatch, loggersPatch, notificationPatch, schedulePatch, jobsMonkeyPatch, databasePatch} from "./loggers"
+import {
+  cachePatch,
+  mailerMonkeyPatch,
+  loggersPatch,
+  notificationPatch,
+  schedulePatch,
+  jobsMonkeyPatch,
+  databasePatch,
+} from "./loggers";
 import LogWatcher from "../watchers/LogWatcher";
 import MailWatcher from "../watchers/MailWatcher";
 import JobWatcher from "../watchers/JobWatcher";
@@ -20,13 +30,14 @@ import RequestWatcher from "../watchers/RequestWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import QueryWatcher from "../watchers/QueryWatcher";
 import { requestPatch } from "./patchers";
+import { ConnectionType, ConnectionDriver } from "../types";
 
 export async function setupLogger(
   config: any,
-  databaseConnection: MongoClient | Client | RedisClientType | Connection
+  driver: ConnectionDriver,
+  connection: ConnectionType
 ): Promise<string> {
-  const databaseType = config.database;
-  setupMigrations(databaseType, databaseConnection);
+  await setupMigrations(driver, connection);
 
   const errors = config.packages.has("errors");
   const logging = config.packages.has("logging");
@@ -40,28 +51,30 @@ export async function setupLogger(
   const http = config.packages.has("http");
 
   errors && initErrors(errors.name);
-  logging  && initLogging(logging.name);
-  database  && initDatabase(database.name);
-  jobs  && initJobs(jobs.name);
-  scheduler  && initScheduler(scheduler.name);
-  mailer  && initMailer(mailer.name);
-  cache  && initCache(cache.name);
-  notifications  && initNotifications(notifications.name);
-  requests  && initRequests(requests.name);
-  http  && initHttp(http.name);
+  logging && initLogging(logging.name);
+  database && initDatabase(database.name);
+  jobs && initJobs(jobs.name);
+  scheduler && initScheduler(scheduler.name);
+  mailer && initMailer(mailer.name);
+  cache && initCache(cache.name);
+  notifications && initNotifications(notifications.name);
+  requests && initRequests(requests.name);
+  http && initHttp(http.name);
 
   return "Observatory is ready to use!";
 }
 
-async function setupMigrations(databaseType: string, databaseConnection: MongoClient | Client | RedisClientType | Connection) {
-  if (databaseType === "redis") {
-    await redisUp(databaseConnection as RedisClientType);
-  } else if (databaseType === "mongodb") {
-    await mongodbUp(databaseConnection as MongoClient);
-  } else if (databaseType === "postgres") {
-    await postgresUp(databaseConnection as Client);
-  } else if (databaseType === "mysql") {
-    await mysqlUp(databaseConnection as Connection);
+async function setupMigrations(driver: string, connection: ConnectionType) {
+  if (driver === "redis") {
+    await redisUp(connection as RedisClientType);
+  } else if (driver === "mongodb") {
+    await mongodbUp(connection as MongoClient);
+  } else if (driver === "postgres") {
+    await postgresUp(connection as Client);
+  } else if (driver === "mysql") {
+    await mysqlUp(connection as MySqlConnection);
+  } else if (driver === "mysql2") {
+    await mysql2Up(connection as MySql2Connection);
   }
 }
 
@@ -83,7 +96,7 @@ function initDatabase(database: string[]) {
 }
 
 function initJobs(jobs: string[]) {
-  const loggerInstance = new JobWatcher()
+  const loggerInstance = new JobWatcher();
   jobsMonkeyPatch(loggerInstance, jobs);
   return jobs;
 }
@@ -95,31 +108,31 @@ function initScheduler(scheduler: string[]) {
 }
 
 function initMailer(mailer: string[]) {
-  const loggerInstance = new MailWatcher()
+  const loggerInstance = new MailWatcher();
   mailerMonkeyPatch(loggerInstance, mailer);
   return mailer;
 }
 
 function initCache(cache: string[]) {
-  const loggerInstance = new CacheWatcher()
+  const loggerInstance = new CacheWatcher();
   cachePatch(loggerInstance, cache);
   return cache;
 }
 
 function initNotifications(notifications: string[]) {
-  const loggerInstance = new NotificationWatcher()
+  const loggerInstance = new NotificationWatcher();
   notificationPatch(loggerInstance, notifications);
   return notifications;
 }
 
 function initRequests(requests: string[]) {
-  const loggerInstance = new RequestWatcher()
+  const loggerInstance = new RequestWatcher();
   requestPatch(loggerInstance, requests);
   return requests;
 }
 
 function initHttp(http: string[]) {
-  const loggerInstance = new HTTPClientWatcher()
+  const loggerInstance = new HTTPClientWatcher();
   return http;
 }
 

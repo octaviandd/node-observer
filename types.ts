@@ -1,5 +1,10 @@
 /** @format */
 import { Request, Response, NextFunction } from "express";
+import { MongoClient } from "mongodb";
+import { Connection as MySql2Connection } from "mysql2/promise";
+import { Connection as MySqlConnection } from "mysql";
+import { Client } from "pg";
+import { RedisClientType } from "redis";
 
 type Database = "redis" | "mongodb" | "postgres" | "mysql";
 type Logger = "winston" | "pino" | "bunyan";
@@ -19,20 +24,20 @@ export interface config {
     logging?: {
       name: Logger[];
       connection: {} | Function;
-    }
+    };
     database?: {
       name: Database[];
       connection: {} | Function;
-    }
+    };
     jobs?: Jobs[];
     scheduler?: {
       name: Scheduler[];
       connection: {} | Function;
-    }
+    };
     mailer?: {
       name: Mailer[];
       connection: {} | Function;
-    }
+    };
     cache?: {
       name: Cache[];
       connection: {} | Function;
@@ -40,7 +45,7 @@ export interface config {
     notifications?: {
       name: Notifications[];
       connection: {} | Function;
-    }
+    };
     requests?: Requests[];
     http?: Http[];
   };
@@ -76,3 +81,12 @@ export type MiddleWareParams<T extends LoggerType> = T extends "request"
   : T extends "cache"
   ? { key: string; value: string }
   : never;
+
+export type StoreConnection =
+  | MongoClient
+  | Client
+  | RedisClientType
+  | MySqlConnection
+  | MySql2Connection;
+
+export type StoreDriver = "redis" | "mysql" | "mysql2" | "mongodb" | "postgres";
