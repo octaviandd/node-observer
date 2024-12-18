@@ -9,13 +9,14 @@ import { Knex } from "knex";
 
 export type Logger = "winston" | "pino" | "bunyan";
 export type Scheduler = "node-schedule";
-export type Mailer = "nodemailer" | "sendgrid" | "mailgun";
+export type Mailer = "nodemailer" | "sendgrid";
 export type Cache = "redis" | "ioredis" | "node-cache" | "lru-cache";
-export type Notifications = "onesignal" | "firebase" | "pusher";
+export type Notifications = "pusher";
 export type Requests = "express";
 export type Http = "axios" | "http" | "https" | "fetch";
 export type Jobs = "bull" | "agenda";
 export type Errors = "uncaught" | "unhandled";
+// what to do with database logging for queries.
 
 export interface config {
   packages: {

@@ -6,6 +6,7 @@ import {
   redisCommandArgs,
   nodeCacheCommandsArgs,
 } from "./constants";
+import { parseHeaders } from "./utils";
 
 // Path: lib/patchers.ts
 
@@ -37,6 +38,40 @@ export function nodeMailerPatcher(pkg: any, loggerInstance: any) {
         });
 
         return originalSendMail.call(this, mailOptions, callback);
+      };
+
+      return transporterInstance;
+    };
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/**
+ *  Monkey patch for sendgrid to record emails
+ * @param pkg
+ * @param loggerInstance
+ * @returns @void
+ */
+export function sendGridPatcher(pkg: any, loggerInstance: any) {
+  const originalTrigger = pkg.send;
+
+  try {
+    pkg.send = function (...args: any) {
+      const transporterInstance = originalTrigger.apply(this, args);
+      const originalSendMail = transporterInstance.send;
+
+      transporterInstance.send = function (mailOptions: any) {
+        loggerInstance.addContent({
+          to: mailOptions.to,
+          from: mailOptions.from,
+          subject: mailOptions.subject,
+          text: mailOptions.text,
+          html: mailOptions.html,
+          time: new Date(),
+        });
+
+        return originalSendMail.call(this, mailOptions);
       };
 
       return transporterInstance;
@@ -385,7 +420,7 @@ export async function nodeSchedulePatcher(
 }
 
 /**
- * Monkey patch for bull to record pusher notifications
+ * Monkey patch for pusher to record pusher notifications
  * @param loggerInstance
  * @param pkg
  * @param connection
@@ -573,7 +608,7 @@ export async function pgPatcher(
  * @param pkg
  * @returns @void
  */
-export async function requestPatchPatcher(loggerInstance: any, pkg: any) {
+export async function expressRequestPatcher(loggerInstance: any, pkg: any) {
   const originalUse = pkg.application.use;
 
   try {
@@ -826,23 +861,41 @@ export async function bullPatcher(
   pkg: any,
   connection: any
 ) {
-  if (pkg) {
-    const originalTrigger = pkg.prototype.add;
+  const originalProcess = pkg.prototype.process;
+  const originalRetryJob = pkg.prototype.retryJob;
+  const originalStartJob = pkg.prototype.start;
+  const originalPauseJob = pkg.prototype.pause;
+  const originalResumeJob = pkg.prototype.resume;
+  const originalProcessJob = pkg.prototype.processJob;
+  const originalAddJob = pkg.prototype.add;
 
-    try {
-      pkg.prototype.add = function (...args: any) {
+  const FN = {
+    add: originalAddJob,
+    process: originalProcess,
+    retry: originalRetryJob,
+    start: originalStartJob,
+    pause: originalPauseJob,
+    resume: originalResumeJob,
+    processJob: originalProcessJob,
+  };
+
+  try {
+    for (const [key, value] of Object.entries(FN)) {
+      pkg.prototype[key] = function (...args: any) {
+        const job = args[0];
         loggerInstance.addContent({
-          type: "add",
-          package: "bull",
-          queue: args[0],
-          data: args[1],
+          name: this.Queue.name,
+          data: args,
           time: new Date(),
+          mode: key,
+          package: "bull",
         });
-        return originalTrigger.apply(this, args);
+
+        return value.apply(this, args);
       };
-    } catch (e) {
-      console.error(e);
     }
+  } catch (e) {
+    console.error(e);
   }
 }
 
@@ -858,22 +911,344 @@ export async function agendaPatcher(
   pkg: any,
   connection: any
 ) {
-  if (pkg) {
-    const originalTrigger = pkg.prototype.schedule;
+  if (connection) {
+    const ProtoAgenda = connection.__proto__;
+
+    const FN = {
+      schedule: ProtoAgenda.schedule,
+      cancel: ProtoAgenda.cancel,
+      create: ProtoAgenda.create,
+      purge: ProtoAgenda.purge,
+      scheduleJob: ProtoAgenda.scheduleJob,
+      now: ProtoAgenda.now,
+      saveJob: ProtoAgenda.saveJob,
+    };
 
     try {
-      pkg.prototype.schedule = function (...args: any) {
-        loggerInstance.addContent({
-          type: "schedule",
-          package: "agenda",
-          job: args[0],
-          data: args[1],
-          time: new Date(),
-        });
-        return originalTrigger.apply(this, args);
-      };
+      for (const [key, value] of Object.entries(FN)) {
+        ProtoAgenda[key] = function (...args: any) {
+          const job = args[0];
+          loggerInstance.addContent({
+            name: job.attrs.name,
+            data: args,
+            time: new Date(),
+            mode: key,
+            package: "agenda",
+          });
+
+          return value.apply(this, args);
+        };
+      }
     } catch (e) {
       console.error(e);
     }
   }
+}
+
+/**
+ * Fetch monkey patch to record fetch requests
+ * @param logger
+ * @returns @Response
+ */
+export function fetchPatch(logger: any) {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async function (url, options = {}) {
+    const startTime = Date.now();
+
+    const req = new Request(url, options);
+    try {
+      const response = await originalFetch(url, options);
+      const duration = Date.now() - startTime;
+      const memoryUsage = process.memoryUsage();
+
+      const responseCopy = response.clone();
+
+      logger.addContent({
+        method: req.method,
+        url: req.url,
+        timestamp: new Date(),
+        status: response.status,
+        duration,
+        memoryUsage,
+        payload: req.body || "N/A",
+        options,
+        headers: Object.fromEntries(response.headers.entries()),
+        response: await responseCopy.json(),
+      });
+
+      return response;
+    } catch (error) {
+      console.error(`Fetch failed:`, error);
+      throw error;
+    }
+  };
+  return;
+}
+
+/**
+ * Monkey patch for log4js to record logs
+ * @param loggerInstance
+ * @param pkg
+ * @param connection
+ * @returns @void
+ */
+export function log4jsPatcher(loggerInstance: any, pkg: any, connection: any) {
+  if (connection) {
+    const ProtoLog4js = connection.__proto__;
+
+    const FN = {
+      error: ProtoLog4js.error,
+      warn: ProtoLog4js.warn,
+      info: ProtoLog4js.info,
+      debug: ProtoLog4js.debug,
+      trace: ProtoLog4js.trace,
+      fatal: ProtoLog4js.fatal,
+    };
+
+    try {
+      for (const [key, value] of Object.entries(FN)) {
+        ProtoLog4js[key] = function (...args: any) {
+          loggerInstance.addContent({
+            level: key,
+            package: "log4js",
+            message: args[0],
+            time: new Date(),
+          });
+          return value.apply(this, args);
+        };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+}
+
+/**
+ *  Monkey patch for http to record requests
+ * @param loggerInstance
+ * @param pkg
+ * @returns @void
+ */
+export function httpPatcher(loggerInstance: any, pkg: any) {
+  const originalRequest = pkg.request;
+  const originalGet = pkg.get;
+
+  try {
+    pkg.request = function (...args: any) {
+      const req = originalRequest.apply(this, args);
+      const memoryUsage = process.memoryUsage();
+      const start = Date.now();
+
+      req.on("response", (res: any) => {
+        console.log("response request http");
+        const duration = Date.now() - start;
+        loggerInstance.addContent({
+          method: req.method,
+          url: req.path,
+          timestamp: new Date(),
+          status: res?.statusCode || req.res.statusCode,
+          duration,
+          ipAddress: req.socket.remoteAddress,
+          sockets: req.agent?.sockets || "N/A",
+          memoryUsage,
+          hostname: req.hostname,
+          servername: res.servername || "unknown",
+          payload: req.body || "N/A",
+          protocol: req.agent.protocol,
+          options: req.agent?.options || "N/A",
+          session: req.session || {},
+          response: req._events.response(),
+          headers: req._header,
+        });
+      });
+
+      return req;
+    };
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    pkg.get = function (...args: any) {
+      const req = originalGet.apply(this, args);
+
+      const start = Date.now();
+
+      req.on("response", (res: any) => {
+        const duration = Date.now() - start;
+        const memoryUsage = process.memoryUsage();
+
+        let data = "";
+        res.on("data", (chunk: any) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          const headersObject: { [key: string]: string } = {};
+          for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
+            const key = req.res.rawHeaders[i];
+            const value = req.res.rawHeaders[i + 1];
+            headersObject[key] = value;
+          }
+
+          loggerInstance.addContent({
+            method: req.method,
+            url: req.path,
+            timestamp: new Date(),
+            status: req.res.statusCode,
+            duration,
+            memoryUsage,
+            hostname: req.host,
+            protocol: req.protocol,
+            options: req.agent?.options || "N/A",
+            session: req.session || {},
+            headers: parseHeaders(req._header),
+            rawHeaders: headersObject,
+            version: req.res.httpVersion,
+            response: JSON.parse(data),
+          });
+        });
+      });
+
+      return req;
+    };
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/**
+ *  Monkey patch for https to record requests
+ * @param loggerInstance
+ * @param pkg
+ * @returns @void
+ */
+export function httpsPatcher(loggerInstance: any, pkg: any) {
+  const originalRequest = pkg.request;
+  const originalGet = pkg.get;
+
+  try {
+    pkg.request = function (...args: any) {
+      const req = originalRequest.apply(this, args);
+      const start = Date.now();
+
+      const headers = args[0]?.headers || {};
+      if (headers["User-Agent"] && headers["User-Agent"].includes("axios")) {
+        console.log("Axios request detected, skipping custom handling.");
+        req.end();
+        return req; // Exit early for Axios requests
+      }
+
+      req.on("response", (res: any) => {
+        const memoryUsage = process.memoryUsage();
+        const duration = Date.now() - start;
+        let data = "";
+        res.on("data", (chunk: any) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          const headersObject: { [key: string]: string } = {};
+          for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
+            const key = req.res.rawHeaders[i];
+            const value = req.res.rawHeaders[i + 1];
+            headersObject[key] = value;
+          }
+
+          loggerInstance.addContent({
+            method: req.method,
+            url: req.protocol + "//" + req.host + req.path,
+            timestamp: new Date(),
+            status: req.res.statusCode,
+            duration,
+            memoryUsage,
+            options: args,
+            headers: parseHeaders(req._header),
+            rawHeaders: headersObject,
+            response: JSON.parse(data),
+          });
+        });
+      });
+
+      req.end();
+      return req;
+    };
+  } catch (e) {
+    console.error(e);
+  }
+
+  try {
+    pkg.get = function (...args: any) {
+      const req = originalGet.apply(this, args);
+      const start = Date.now();
+
+      req.on("response", (res: any) => {
+        console.log("response get https");
+        const duration = Date.now() - start;
+        const memoryUsage = process.memoryUsage();
+
+        let data = "";
+        res.on("data", (chunk: any) => {
+          data += chunk;
+        });
+
+        res.on("end", () => {
+          const headersObject: { [key: string]: string } = {};
+          for (let i = 0; i < req.res.rawHeaders.length; i += 2) {
+            const key = req.res.rawHeaders[i];
+            const value = req.res.rawHeaders[i + 1];
+            headersObject[key] = value;
+          }
+
+          loggerInstance.addContent({
+            method: req.method,
+            url: req.protocol + "//" + req.host + req.path,
+            timestamp: new Date(),
+            status: req.res.statusCode,
+            duration,
+            memoryUsage,
+            options: args,
+            headers: parseHeaders(req._header),
+            rawHeaders: headersObject,
+            response: JSON.parse(data),
+          });
+        });
+      });
+
+      return req;
+    };
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/**
+ *  Monkey patch for uncaught exceptions to record errors
+ * @param loggerInstance
+ * @returns @void
+ */
+export function uncaughtPatcher(loggerInstance: any) {
+  process.on("uncaughtException", (error) => {
+    loggerInstance.addContent({
+      type: "uncaughtException",
+      error,
+      time: new Date(),
+    });
+  });
+}
+
+/**
+ *  Monkey patch for unhandled rejections to record errors
+ * @param loggerInstance
+ * @returnS @void
+ */
+export function unhandledRejectionPatcher(loggerInstance: any) {
+  process.on("unhandledRejection", (error) => {
+    loggerInstance.addContent({
+      type: "unhandledRejection",
+      error,
+      time: new Date(),
+    });
+  });
 }

@@ -15,6 +15,12 @@ import {
   axiosPatcher,
   bullPatcher,
   agendaPatcher,
+  fetchPatch,
+  httpPatcher,
+  httpsPatcher,
+  sendGridPatcher,
+  uncaughtPatcher,
+  unhandledRejectionPatcher,
 } from "./patchers";
 import {
   Errors,
@@ -26,47 +32,7 @@ import {
   Notifications,
   Scheduler,
 } from "../types";
-
-/**
- * Fetch monkey patch to record fetch requests
- * @param logger
- * @returns @Response
- */
-export function fetchMonkeyPatch(logger: any) {
-  const originalFetch = globalThis.fetch;
-
-  globalThis.fetch = async function (url, options = {}) {
-    const startTime = Date.now();
-
-    const req = new Request(url, options);
-    try {
-      const response = await originalFetch(url, options);
-      const duration = Date.now() - startTime;
-      const memoryUsage = process.memoryUsage();
-
-      const responseCopy = response.clone();
-
-      logger.addContent({
-        method: req.method,
-        url: req.url,
-        timestamp: new Date(),
-        status: response.status,
-        duration,
-        memoryUsage,
-        payload: req.body || "N/A",
-        options,
-        headers: Object.fromEntries(response.headers.entries()),
-        response: await responseCopy.json(),
-      });
-
-      return response;
-    } catch (error) {
-      console.error(`Fetch failed:`, error);
-      throw error;
-    }
-  };
-  return;
-}
+import { isPackageInstalled } from "./utils";
 
 /**
  * Monkey patch for exceptions to record errors
@@ -74,16 +40,17 @@ export function fetchMonkeyPatch(logger: any) {
  * @param errors
  */
 export function exceptionMonkeyPatch(loggerInstance: any, ERRORS: Errors[]) {
-  ERRORS.forEach((type) => {
-    process.on(type, (error: Error) => {
-      loggerInstance.addContent({
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        time: new Date(),
-      });
-    });
-  });
+  for (const error of ERRORS) {
+    switch (error) {
+      case "uncaught":
+        uncaughtPatcher(loggerInstance);
+        break;
+      case "unhandled":
+        unhandledRejectionPatcher(loggerInstance);
+      default:
+        break;
+    }
+  }
 }
 
 /**
@@ -104,6 +71,8 @@ export function mailerMonkeyPatch(loggerInstance: any, mailer: Mailer[]) {
       case "nodemailer":
         nodeMailerPatcher(pkg, loggerInstance);
         break;
+      case "sendgrid":
+        sendGridPatcher(pkg, loggerInstance);
       default:
         break;
     }
@@ -309,6 +278,15 @@ export function httpPatch(loggerInstance: any, http: Http[]) {
     switch (h) {
       case "axios":
         axiosPatcher(loggerInstance, pkg);
+        break;
+      case "http":
+        httpPatcher(loggerInstance, pkg);
+        break;
+      case "https":
+        httpsPatcher(loggerInstance, pkg);
+        break;
+      case "fetch":
+        fetchPatch(loggerInstance);
         break;
       default:
         break;
