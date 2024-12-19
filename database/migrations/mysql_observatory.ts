@@ -3,6 +3,10 @@
 import * as mysql from "mysql";
 
 export function up(connection: mysql.Connection): void {
+  // Ensure the connection is established
+  if (connection.state === "disconnected") {
+    connection.connect();
+  }
   // Create observatory_monitoring table
   connection.query(`
     CREATE TABLE observatory_monitoring (
@@ -41,6 +45,9 @@ export function up(connection: mysql.Connection): void {
 }
 
 export async function down(connection: mysql.Connection): Promise<void> {
+  if (connection.state === "disconnected") {
+    connection.connect();
+  }
   connection.query("DROP TABLE IF EXISTS observatory_entries_tags;");
   connection.query("DROP TABLE IF EXISTS observatory_entries;");
   connection.query("DROP TABLE IF EXISTS observatory_monitoring;");

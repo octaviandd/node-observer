@@ -89,12 +89,8 @@ export async function setupLogger(
   driver: StoreDriver,
   connection: StoreConnection
 ): Promise<string> {
-  console.log("hit");
-  // await setupMigrations(driver, connection);
-  console.log("hitjere");
-
-  console.log(config);
-
+  await setupMigrations(driver, connection);
+  console.log("setupMigrations done");
   const packages: (keyof typeof initFunctions)[] = [
     "errors",
     "logging",
@@ -114,6 +110,7 @@ export async function setupLogger(
     }
   });
 
+  console.log("Observatory is ready to use!");
   return "Observatory is ready to use!";
 }
 

@@ -3,6 +3,9 @@
 import * as mysql from "mysql2/promise";
 
 export async function up(connection: mysql.Connection): Promise<void> {
+  if (connection instanceof Promise) {
+    connection = await connection;
+  }
   // Create observatory_monitoring table
   await connection.execute(`
     CREATE TABLE observatory_monitoring (
@@ -41,6 +44,9 @@ export async function up(connection: mysql.Connection): Promise<void> {
 }
 
 export async function down(connection: mysql.Connection): Promise<void> {
+  if (connection instanceof Promise) {
+    connection = await connection;
+  }
   await connection.execute("DROP TABLE IF EXISTS observatory_entries_tags;");
   await connection.execute("DROP TABLE IF EXISTS observatory_entries;");
   await connection.execute("DROP TABLE IF EXISTS observatory_monitoring;");

@@ -88,7 +88,8 @@ export type StoreConnection =
   | RedisClientType
   | MySqlConnection
   | MySql2Connection
-  | Knex;
+  | Knex
+  | Promise<MySql2Connection>;
 
 export type StoreDriver =
   | "redis"

@@ -5,9 +5,24 @@ import routes from "./routes/routes";
 import cors from "cors";
 import { setupLogger } from "./lib/logger";
 import { createClient, RedisClientType } from "redis";
+import mysql from "mysql";
+import * as mysql2 from "mysql2/promise";
 
 const redisConnection: RedisClientType = createClient({
   url: "redis://localhost:6379",
+});
+
+const mysqlConnection = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "root",
+  database: "observatory",
+});
+
+const mysql2Connection = mysql2.createConnection({
+  host: "localhost",
+  user: "root",
+  database: "observatory",
 });
 
 const config = {
@@ -43,7 +58,7 @@ const config = {
   },
 };
 
-setupLogger(config, "redis", redisConnection);
+setupLogger(config, "mysql2", mysql2Connection);
 
 const app = express();
 
