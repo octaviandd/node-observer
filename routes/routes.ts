@@ -1,18 +1,7 @@
 /** @format */
 
 import { Router } from "express";
-import RequestWatcher from "../watchers/RequestWatcher";
-import MailWatcher from "../watchers/MailWatcher";
-import RedisWatcher from "../watchers/RedisWatcher";
-import ScheduleWatcher from "../watchers/ScheduleWatcher";
-import NotificationWatcher from "../watchers/NotificationWatcher";
-import ExceptionWatcher from "../watchers/ExceptionWatcher";
-import QueryWatcher from "../watchers/QueryWatcher";
-import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
-import CacheWatcher from "../watchers/CacheWatcher";
-import LogWatcher from "../watchers/LogWatcher";
-import JobWatcher from "../watchers/JobWatcher";
-import connection from "../database/connection";
+import { watchers } from "../lib/logger";
 
 const router = Router();
 
@@ -21,96 +10,86 @@ router.get("/", (req, res) => {
 });
 
 // Requests entries...
-const requestController = new RequestWatcher();
-router.get("/requests", (req, res) => requestController.getIndex(req, res));
+router.get("/requests", (req, res) => watchers.requests.getIndex(req, res));
 router.get("/requests/:requestId", (req, res) =>
-  requestController.getView(req, res)
+  watchers.requests.getView(req, res)
 );
 
-const mailController = new MailWatcher();
-router.get("/mails", (req, res) => mailController.getIndex(req, res));
+router.get("/mails", (req, res) => watchers.mailer.getIndex(req, res));
 router.get("/mails/:mailId", (req, res) => {
-  mailController.getView(req, res);
+  watchers.mailer.getView(req, res);
 });
 
-// Redis Commands entries...
-const redisController = new RedisWatcher();
-router.get("/redis", (req, res) => {
-  redisController.getIndex(req, res);
-});
-router.get("/redis/:redisRowId", (req, res) => {
-  redisController.getView(req, res);
-});
+// // Redis Commands entries...
+// const redisController = new RedisWatcher();
+// router.get("/redis", (req, res) => {
+//   redisController.getIndex(req, res);
+// });
+// router.get("/redis/:redisRowId", (req, res) => {
+//   redisController.getView(req, res);
+// });
 
-const scheduleController = new ScheduleWatcher();
 // Scheduled Commands entries...
 router.get("/schedules", (req, res) => {
-  scheduleController.getIndex(req, res);
+  watchers.scheduler.getIndex(req, res);
 });
 router.get("/schedules/:scheduleId", (req, res) => {
-  scheduleController.getView(req, res);
+  watchers.scheduler.getView(req, res);
 });
 
-const notificationController = new NotificationWatcher();
 router.get("/notifications", (req, res) => {
-  notificationController.getIndex(req, res);
+  watchers.notifications.getIndex(req, res);
 });
 router.get("/notifications/:notificationId", (req, res) => {
-  notificationController.getView(req, res);
+  watchers.notifications.getView(req, res);
 });
 
-const exceptionController = new ExceptionWatcher();
 // Exception entries...
 router.get("/exceptions", (req, res) => {
-  exceptionController.getIndex(req, res);
+  watchers.exceptions.getIndex(req, res);
 });
 router.get("/exceptions/:exceptionId", (req, res) => {
-  exceptionController.getView(req, res);
+  watchers.exceptions.getView(req, res);
 });
 
-const queriesController = new QueryWatcher();
 // Queries entries...
 router.get("/queries", (req, res) => {
-  queriesController.getIndex(req, res);
+  watchers.database.getIndex(req, res);
 });
 router.get("/queries/:queryId", (req, res) => {
-  queriesController.getView(req, res);
+  watchers.database.getView(req, res);
 });
 
-const httpClientController = new HTTPClientWatcher();
 // HTTP Client entries...
 router.get("/http", (req, res) => {
-  httpClientController.getIndex(req, res);
+  watchers.http.getIndex(req, res);
 });
 router.get("/http/:httpId", (req, res) => {
-  httpClientController.getView(req, res);
+  watchers.http.getView(req, res);
 });
 
-const cacheController = new CacheWatcher();
 // Cache entries...
 router.get("/cache", (req, res) => {
-  cacheController.getIndex(req, res);
+  watchers.cache.getIndex(req, res);
 });
 router.get("/cache/:cacheId", (req, res) => {
-  cacheController.getView(req, res);
+  watchers.cache.getView(req, res);
 });
 
-const logController = new LogWatcher();
 // Log entries...
 router.get("/logs", (req, res) => {
-  logController.getIndex(req, res);
+  watchers.logging.getIndex(req, res);
 });
 router.get("/logs/:logId", (req, res) => {
-  logController.getView(req, res);
+  watchers.logging.getView(req, res);
 });
 
-const jobController = new JobWatcher();
 // Queue entries...
 router.get("/jobs", (req, res) => {
-  jobController.getIndex(req, res);
+  watchers.jobs.getIndex(req, res);
 });
 router.get("/jobs/:jobId", (req, res) => {
-  jobController.getView(req, res);
+  watchers.jobs.getView(req, res);
 });
 
 // Queue Batches entries...
@@ -167,7 +146,6 @@ router.post("/monitored-tags/delete", (req, res) => {
 // Toggle Recording...
 router.get("/toggle-recording", (req, res) => {
   // config.observatoryPaused = !config.observatoryPaused;
-
   // return res.status(200).json({
   //   message: `Observatory recording is now ${
   //     config.observatoryPaused ? "paused" : "enabled"
@@ -176,14 +154,14 @@ router.get("/toggle-recording", (req, res) => {
 });
 
 // Clear Entries...
-router.delete("/entries", (req, res) => {
-  try {
-    connection("observatory_entries").truncate();
-    return res.status(200).json({ message: "Entries cleared" });
-  } catch (e) {
-    console.error(e);
-  }
-});
+// router.delete("/entries", (req, res) => {
+//   try {
+//     connection("observatory_entries").truncate();
+//     return res.status(200).json({ message: "Entries cleared" });
+//   } catch (e) {
+//     console.error(e);
+//   }
+// });
 // Handle entries destroy
 
 export default router;

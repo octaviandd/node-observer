@@ -10,7 +10,6 @@ import { Client } from "pg";
 import { RedisClientType } from "redis";
 import { Connection as MySql2Connection } from "mysql2/promise";
 import { Connection as MySqlConnection } from "mysql";
-import { collector } from "../middleware/inbuilt/collector";
 import {
   cachePatch,
   mailerMonkeyPatch,
@@ -19,6 +18,7 @@ import {
   schedulePatch,
   jobsMonkeyPatch,
   databasePatch,
+  exceptionMonkeyPatch,
 } from "./loggers";
 import LogWatcher from "../watchers/LogWatcher";
 import MailWatcher from "../watchers/MailWatcher";
@@ -29,6 +29,7 @@ import NotificationWatcher from "../watchers/NotificationWatcher";
 import RequestWatcher from "../watchers/RequestWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import QueryWatcher from "../watchers/QueryWatcher";
+import ExceptionWatcher from "../watchers/ExceptionWatcher";
 import {
   Errors,
   Logger,
@@ -42,6 +43,40 @@ import {
 } from "../types";
 import { expressRequestPatcher, httpPatcher } from "./patchers";
 
+export function instanceCreator(
+  driver: StoreDriver,
+  connection: StoreConnection
+) {
+  const logWatcherInstance = new LogWatcher(driver, connection);
+  const mailWatcherInstance = new MailWatcher(driver, connection);
+  const jobWatcherInstance = new JobWatcher(driver, connection);
+  const scheduleWatcherInstance = new ScheduleWatcher(driver, connection);
+  const cacheWatcherInstance = new CacheWatcher(driver, connection);
+  const notificationWatcherInstance = new NotificationWatcher(
+    driver,
+    connection
+  );
+  const requestWatcherInstance = new RequestWatcher(driver, connection);
+  const httpClientWatcherInstance = new HTTPClientWatcher(driver, connection);
+  const queryWatcherInstance = new QueryWatcher(driver, connection);
+  const exceptionWatcherInstance = new ExceptionWatcher(driver, connection);
+
+  return {
+    logWatcherInstance,
+    mailWatcherInstance,
+    jobWatcherInstance,
+    scheduleWatcherInstance,
+    cacheWatcherInstance,
+    notificationWatcherInstance,
+    requestWatcherInstance,
+    httpClientWatcherInstance,
+    queryWatcherInstance,
+    exceptionWatcherInstance,
+  };
+}
+
+export const watchers: any = {};
+
 /**
  * Initial entry point for setting up the logger
  * @param config
@@ -54,30 +89,30 @@ export async function setupLogger(
   driver: StoreDriver,
   connection: StoreConnection
 ): Promise<string> {
-  await setupMigrations(driver, connection);
+  console.log("hit");
+  // await setupMigrations(driver, connection);
+  console.log("hitjere");
 
-  const errors = config.packages.has("errors");
-  const logging = config.packages.has("logging");
-  const database = config.packages.has("database");
-  const jobs = config.packages.has("jobs");
-  const scheduler = config.packages.has("scheduler");
-  const mailer = config.packages.has("mailer");
-  const cache = config.packages.has("cache");
-  const notifications = config.packages.has("notifications");
-  const requests = config.packages.has("requests");
-  const http = config.packages.has("http");
+  console.log(config);
 
-  errors && initFunctions.errors(errors.name, driver, connection);
-  logging && initFunctions.logging(logging.name, driver, connection);
-  database && initFunctions.database(database.name, driver, connection);
-  jobs && initFunctions.jobs(jobs.name, driver, connection);
-  scheduler && initFunctions.scheduler(scheduler.name, driver, connection);
-  mailer && initFunctions.mailer(mailer.name, driver, connection);
-  cache && initFunctions.cache(cache.name, driver, connection);
-  notifications &&
-    initFunctions.notifications(notifications.name, driver, connection);
-  requests && initFunctions.requests(requests.name, driver, connection);
-  http && initFunctions.http(http.name, driver, connection);
+  const packages: (keyof typeof initFunctions)[] = [
+    "errors",
+    "logging",
+    "database",
+    "jobs",
+    "scheduler",
+    "mailer",
+    "cache",
+    "notifications",
+    "requests",
+    "http",
+  ];
+
+  packages.forEach((pkg) => {
+    if (config.packages.hasOwnProperty(pkg)) {
+      initFunctions[pkg](config.packages[pkg], driver, connection);
+    }
+  });
 
   return "Observatory is ready to use!";
 }
@@ -110,77 +145,78 @@ const initFunctions = {
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new LogWatcher(driver, connection);
-    collector.exceptionMonkeyPatch(loggerInstance, items);
+    const { exceptionWatcherInstance } = instanceCreator(driver, connection);
+    exceptionMonkeyPatch(exceptionWatcherInstance, items);
+    watchers.errors = exceptionWatcherInstance;
   },
   logging: (
     items: Logger[],
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new LogWatcher(driver, connection);
-    loggersPatch(loggerInstance, items, connection);
-    return items;
+    const { logWatcherInstance } = instanceCreator(driver, connection);
+    loggersPatch(logWatcherInstance, items, connection);
+    watchers.logging = logWatcherInstance;
   },
   database: (
     items: string[],
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new QueryWatcher(driver, connection);
-    databasePatch(loggerInstance, items);
-    return items;
+    const { queryWatcherInstance } = instanceCreator(driver, connection);
+    databasePatch(queryWatcherInstance, items);
+    watchers.database = queryWatcherInstance;
   },
   jobs: (items: Jobs[], driver: StoreDriver, connection: StoreConnection) => {
-    const loggerInstance = new JobWatcher(driver, connection);
-    jobsMonkeyPatch(loggerInstance, items, connection);
-    return items;
+    const { jobWatcherInstance } = instanceCreator(driver, connection);
+    jobsMonkeyPatch(jobWatcherInstance, items, connection);
+    watchers.jobs = jobWatcherInstance;
   },
   scheduler: (
     items: Scheduler[],
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new ScheduleWatcher(driver, connection);
-    schedulePatch(loggerInstance, items, connection);
-    return items;
+    const { scheduleWatcherInstance } = instanceCreator(driver, connection);
+    schedulePatch(scheduleWatcherInstance, items, connection);
+    watchers.scheduler = scheduleWatcherInstance;
   },
   mailer: (
     items: Mailer[],
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new MailWatcher(driver, connection);
-    mailerMonkeyPatch(loggerInstance, items);
-    return items;
+    const { mailWatcherInstance } = instanceCreator(driver, connection);
+    mailerMonkeyPatch(mailWatcherInstance, items);
+    watchers.mailer = mailWatcherInstance;
   },
   cache: (items: Cache[], driver: StoreDriver, connection: StoreConnection) => {
-    const loggerInstance = new CacheWatcher(driver, connection);
-    cachePatch(loggerInstance, items, connection);
-    return items;
+    const { cacheWatcherInstance } = instanceCreator(driver, connection);
+    cachePatch(cacheWatcherInstance, items, connection);
+    watchers.cache = cacheWatcherInstance;
   },
   notifications: (
     items: Notifications[],
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new NotificationWatcher(driver, connection);
-    notificationPatch(loggerInstance, items, connection);
-    return items;
+    const { notificationWatcherInstance } = instanceCreator(driver, connection);
+    notificationPatch(notificationWatcherInstance, items, connection);
+    watchers.notifications = notificationWatcherInstance;
   },
   requests: (
     items: string[],
     driver: StoreDriver,
     connection: StoreConnection
   ) => {
-    const loggerInstance = new RequestWatcher(driver, connection);
-    expressRequestPatcher(loggerInstance, items);
-    return items;
+    const { requestWatcherInstance } = instanceCreator(driver, connection);
+    expressRequestPatcher(requestWatcherInstance, items);
+    watchers.requests = requestWatcherInstance;
   },
   http: (items: string[], driver: StoreDriver, connection: StoreConnection) => {
-    const loggerInstance = new HTTPClientWatcher(driver, connection);
-    httpPatcher(loggerInstance, items);
-    return items;
+    const { httpClientWatcherInstance } = instanceCreator(driver, connection);
+    httpPatcher(httpClientWatcherInstance, items);
+    watchers.http = httpClientWatcherInstance;
   },
 };
 

@@ -39,8 +39,8 @@ import { isPackageInstalled } from "./utils";
  * @param loggerInstance
  * @param errors
  */
-export function exceptionMonkeyPatch(loggerInstance: any, ERRORS: Errors[]) {
-  for (const error of ERRORS) {
+export function exceptionMonkeyPatch(loggerInstance: any, errors: Errors[]) {
+  for (const error of errors) {
     switch (error) {
       case "uncaught":
         uncaughtPatcher(loggerInstance);

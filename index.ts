@@ -1,14 +1,13 @@
 /** @format */
 
 import setupLogger from "./lib/logger";
-import { runMigration, rollbackMigration } from "./database/migrate";
 import { config } from "./types";
-import { ConnectionType, ConnectionDriver } from "./types";
+import { StoreConnection, StoreDriver } from "./types";
 
 export async function startObservatory(
   config: config,
-  driver: ConnectionDriver,
-  connection: ConnectionType,
+  driver: StoreDriver,
+  connection: StoreConnection,
   callback: Function
 ) {
   // runMigration();
@@ -17,4 +16,4 @@ export async function startObservatory(
   callback();
 }
 
-export default { startObservatory, rollbackMigration, runMigration };
+export default { startObservatory };

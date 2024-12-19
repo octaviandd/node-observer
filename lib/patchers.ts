@@ -641,7 +641,7 @@ export async function expressRequestPatcher(loggerInstance: any, pkg: any) {
                 middleware: req.route ? req.route.path : "unknown",
                 hostname: req.hostname,
                 payload: req.body,
-                session: req.session || {},
+                // session: req.session || {},
                 response: JSON.parse(res.locals.responseBody)[0],
                 headers: req.headers,
                 body: req.body,
