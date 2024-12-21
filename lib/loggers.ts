@@ -59,15 +59,15 @@ export function exceptionMonkeyPatch(loggerInstance: any, errors: Errors[]) {
  * @param mailer
  * @returns @void
  */
-export function mailerMonkeyPatch(loggerInstance: any, mailer: Mailer[]) {
+export function mailerPatch(loggerInstance: any, mailer: { name: Mailer }[]) {
   for (const mail of mailer) {
-    if (!isPackageInstalled(mail)) {
+    if (!isPackageInstalled(mail.name)) {
       throw new Error(`Package ${mail} is not installed`);
     }
 
-    const pkg = require(mail);
+    const pkg = require(mail.name);
 
-    switch (mail) {
+    switch (mail.name) {
       case "nodemailer":
         nodeMailerPatcher(pkg, loggerInstance);
         break;
@@ -124,25 +124,22 @@ export function cachePatch(
  */
 export function loggersPatch(
   loggerInstance: any,
-  logging: Logger[],
-  connection: any
+  logging: { name: Logger; connection: any }[]
 ) {
   for (const log of logging) {
-    if (!isPackageInstalled(log)) {
-      throw new Error(`Package ${log} is not installed`);
+    if (!isPackageInstalled(log.name)) {
+      throw new Error(`Package ${log.name} is not installed`);
     }
 
-    const pkg = require(log);
-
-    switch (log) {
+    switch (log.name) {
       case "bunyan":
-        bunyanPatcher(loggerInstance, pkg, connection);
+        bunyanPatcher(loggerInstance, log.connection);
         break;
       case "winston":
-        winstonPatcher(loggerInstance, pkg, connection);
+        winstonPatcher(loggerInstance, log.connection);
         break;
       case "pino":
-        pinoPatcher(loggerInstance, pkg, connection);
+        pinoPatcher(loggerInstance, log.connection);
         break;
       default:
         break;
@@ -217,19 +214,18 @@ export function notificationPatch(
  */
 export function schedulePatch(
   loggerInstance: any,
-  scheduler: Scheduler[],
-  connection: any
+  scheduler: { name: Scheduler; connection: any }[]
 ) {
   for (const schedule of scheduler) {
-    if (!isPackageInstalled(schedule)) {
-      throw new Error(`Package ${schedule} is not installed`);
+    if (!isPackageInstalled(schedule.name)) {
+      throw new Error(`Package ${schedule.name} is not installed`);
     }
 
-    const pkg = require(schedule);
+    const pkg = require(schedule.name);
 
-    switch (schedule) {
+    switch (schedule.name) {
       case "node-schedule":
-        nodeSchedulePatcher(loggerInstance, pkg, connection);
+        nodeSchedulePatcher(loggerInstance, pkg);
         break;
       default:
         break;

@@ -3,19 +3,21 @@
 import * as mysql from "mysql2/promise";
 
 export async function up(connection: mysql.Connection): Promise<void> {
+  // Ensure the connection is established
   if (connection instanceof Promise) {
     connection = await connection;
   }
-  // Create observatory_monitoring table
+
+  // Create observatory_monitoring table if it doesn't exist
   await connection.execute(`
-    CREATE TABLE observatory_monitoring (
+    CREATE TABLE IF NOT EXISTS observatory_monitoring (
       tag VARCHAR(255) PRIMARY KEY
     );
   `);
 
-  // Create observatory_entries table
+  // Create observatory_entries table if it doesn't exist
   await connection.execute(`
-    CREATE TABLE observatory_entries (
+    CREATE TABLE IF NOT EXISTS observatory_entries (
       sequence BIGINT AUTO_INCREMENT PRIMARY KEY,
       uuid CHAR(36) NOT NULL UNIQUE,
       batch_id CHAR(36) NOT NULL,
@@ -31,9 +33,9 @@ export async function up(connection: mysql.Connection): Promise<void> {
     );
   `);
 
-  // Create observatory_entries_tags table
+  // Create observatory_entries_tags table if it doesn't exist
   await connection.execute(`
-    CREATE TABLE observatory_entries_tags (
+    CREATE TABLE IF NOT EXISTS observatory_entries_tags (
       entry_uuid CHAR(36) NOT NULL,
       tag VARCHAR(255) NOT NULL,
       PRIMARY KEY (entry_uuid, tag),
@@ -44,9 +46,11 @@ export async function up(connection: mysql.Connection): Promise<void> {
 }
 
 export async function down(connection: mysql.Connection): Promise<void> {
+  // Ensure the connection is established
   if (connection instanceof Promise) {
     connection = await connection;
   }
+
   await connection.execute("DROP TABLE IF EXISTS observatory_entries_tags;");
   await connection.execute("DROP TABLE IF EXISTS observatory_entries;");
   await connection.execute("DROP TABLE IF EXISTS observatory_monitoring;");

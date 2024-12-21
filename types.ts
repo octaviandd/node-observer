@@ -18,36 +18,37 @@ export type Jobs = "bull" | "agenda";
 export type Errors = "uncaught" | "unhandled";
 // what to do with database logging for queries.
 
-export interface config {
+export interface Config {
   packages: {
-    errors: Errors[];
-    logging?: {
-      name: Logger[];
-      connection: {} | Function;
-    };
-    database?: {
-      name: StoreDriver[];
-      connection: {} | Function;
-    };
+    errors?: Errors[];
     jobs?: Jobs[];
-    scheduler?: {
-      name: Scheduler[];
-      connection: {} | Function;
-    };
-    mailer?: {
-      name: Mailer[];
-      connection: {} | Function;
-    };
-    cache?: {
-      name: Cache[];
-      connection: {} | Function;
-    };
-    notifications?: {
-      name: Notifications[];
-      connection: {} | Function;
-    };
     requests?: Requests[];
     http?: Http[];
+    logging?: Array<{
+      name: Logger;
+      connection: {} | Function;
+    }>;
+    database?: Array<{
+      name: StoreDriver;
+      connection: {} | Function;
+    }>;
+
+    scheduler?: Array<{
+      name: Scheduler;
+      connection: {} | Function;
+    }>;
+    mailer?: Array<{
+      name: Mailer;
+      connection: {} | Function;
+    }>;
+    cache?: Array<{
+      name: Cache;
+      connection: {} | Function;
+    }>;
+    notifications?: Array<{
+      name: Notifications;
+      connection: {} | Function;
+    }>;
   };
 }
 

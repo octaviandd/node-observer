@@ -7,6 +7,18 @@ import { setupLogger } from "./lib/logger";
 import { createClient, RedisClientType } from "redis";
 import mysql from "mysql";
 import * as mysql2 from "mysql2/promise";
+import winston from "winston";
+import { Config } from "./types";
+
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.json(),
+  defaultMeta: { service: "user-service" },
+  transports: [
+    new winston.transports.File({ filename: "error.log", level: "error" }),
+    new winston.transports.File({ filename: "combined.log" }),
+  ],
+});
 
 const redisConnection: RedisClientType = createClient({
   url: "redis://localhost:6379",
@@ -25,36 +37,14 @@ const mysql2Connection = mysql2.createConnection({
   database: "observatory",
 });
 
-const config = {
+const config: Config = {
   packages: {
-    errors: ["uncaught", "unhandled"],
-    logging: {
-      name: ["winston"],
-      connection: {},
-    },
-    database: {
-      name: ["knex"],
-      connection: {},
-    },
-    jobs: ["bull"],
-    scheduler: {
-      name: ["node-schedule"],
-      connection: {},
-    },
-    mailer: {
-      name: ["nodemailer"],
-      connection: {},
-    },
-    cache: {
-      name: ["redis"],
-      connection: {},
-    },
-    notifications: {
-      name: ["pusher"],
-      connection: {},
-    },
-    requests: ["express"],
-    http: ["axios"],
+    logging: [
+      {
+        name: "winston",
+        connection: logger,
+      },
+    ],
   },
 };
 

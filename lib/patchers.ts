@@ -40,10 +40,13 @@ export function nodeMailerPatcher(pkg: any, loggerInstance: any) {
         return originalSendMail.call(this, mailOptions, callback);
       };
 
+      console.log("Node mailer patched");
+
       return transporterInstance;
     };
   } catch (e) {
     console.error(e);
+    console.log("Node mailer patch failed");
   }
 }
 
@@ -88,11 +91,7 @@ export function sendGridPatcher(pkg: any, loggerInstance: any) {
  * @param connection
  * @returns @void
  */
-export async function bunyanPatcher(
-  loggerInstance: any,
-  pkg = null,
-  connection: any
-) {
+export async function bunyanPatcher(loggerInstance: any, connection: any) {
   const bunyan = await connection;
   const BunyanLoggerProto = bunyan.__proto__;
 
@@ -116,9 +115,11 @@ export async function bunyanPatcher(
         });
         return value.apply(this, args);
       };
+      console.log(`Bunyan ${key} method patched`);
     }
   } catch (e) {
     console.error(e);
+    console.log("Bunyan patch failed");
   }
 }
 
@@ -129,11 +130,7 @@ export async function bunyanPatcher(
  * @param connection
  * @returns @void
  */
-export async function winstonPatcher(
-  loggerInstance: any,
-  pkg = null,
-  connection: any
-) {
+export async function winstonPatcher(loggerInstance: any, connection: any) {
   const winston = await connection;
   const WinstonLoggerProto = winston.__proto__;
 
@@ -155,9 +152,12 @@ export async function winstonPatcher(
         });
         return value.apply(this, args);
       };
+
+      console.log(`Winston ${key} method patched`);
     }
   } catch (e) {
     console.error(e);
+    console.log("Winston patch failed");
   }
 }
 
@@ -168,7 +168,7 @@ export async function winstonPatcher(
  * @param connection
  * @returns @void
  */
-export async function pinoPatcher(logLogger: any, pkg = null, connection: any) {
+export async function pinoPatcher(logLogger: any, connection: any) {
   const pino = await connection;
   const FN = {
     error: pino.error,
@@ -189,9 +189,11 @@ export async function pinoPatcher(logLogger: any, pkg = null, connection: any) {
         });
         return value.apply(this, args);
       };
+      console.log(`Pino ${key} method patched`);
     }
   } catch (e) {
     console.error(e);
+    console.log("Pino patch failed");
   }
 }
 
@@ -366,11 +368,7 @@ export async function nodeCachePatcher(
  * @param connection
  * @returns @void
  */
-export async function nodeSchedulePatcher(
-  loggerInstance: any,
-  pkg: any,
-  connection: any
-) {
+export async function nodeSchedulePatcher(loggerInstance: any, pkg: any) {
   if (pkg) {
     const originalFns: { [key: string]: Function } = {
       scheduleJob: pkg.scheduleJob,
@@ -404,17 +402,20 @@ export async function nodeSchedulePatcher(
           return originalFn.apply(this, innerArgs);
         };
 
+        console.log("Node schedule patched");
         return originalFns.scheduleJob.apply(this, args);
       };
 
       ["cancelJob", "rescheduleJob"].forEach((method) => {
         pkg[method] = function (...args: any) {
           logAction(args[0], args[1], method.replace("Job", "").toLowerCase());
+          console.log("Node cancel and reschedule patched");
           return originalFns[method].apply(this, args);
         };
       });
     } catch (e) {
       console.error(e);
+      console.log("Node schedule patch failed");
     }
   }
 }

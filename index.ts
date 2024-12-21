@@ -1,11 +1,11 @@
 /** @format */
 
 import setupLogger from "./lib/logger";
-import { config } from "./types";
+import { Config } from "./types";
 import { StoreConnection, StoreDriver } from "./types";
 
 export async function startObservatory(
-  config: config,
+  config: Config,
   driver: StoreDriver,
   connection: StoreConnection,
   callback: Function
