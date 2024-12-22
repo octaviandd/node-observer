@@ -21,8 +21,7 @@ export type Errors = "uncaught" | "unhandled";
 export interface Config {
   packages: {
     errors?: Errors[];
-    jobs?: Jobs[];
-    requests?: Requests[];
+    requests: Requests;
     http?: Http[];
     logging?: Array<{
       name: Logger;
@@ -32,7 +31,10 @@ export interface Config {
       name: StoreDriver;
       connection: {} | Function;
     }>;
-
+    jobs?: Array<{
+      name: Jobs;
+      connection: {} | Function;
+    }>;
     scheduler?: Array<{
       name: Scheduler;
       connection: {} | Function;

@@ -16,9 +16,11 @@ import {
   loggersPatch,
   notificationPatch,
   schedulePatch,
-  jobsMonkeyPatch,
+  jobsPatch,
   databasePatch,
-  exceptionMonkeyPatch,
+  exceptionPatch,
+  frameworkPatch,
+  httpPatch,
 } from "./loggers";
 import LogWatcher from "../watchers/LogWatcher";
 import MailWatcher from "../watchers/MailWatcher";
@@ -41,40 +43,25 @@ import {
   Notifications,
   Jobs,
   Config,
+  Http,
+  Requests,
 } from "../types";
-import { expressRequestPatcher, httpPatcher } from "./patchers";
 
-export function instanceCreator(
+export const instanceCreator = (
   driver: StoreDriver,
   connection: StoreConnection
-) {
-  const logWatcherInstance = new LogWatcher(driver, connection);
-  const mailWatcherInstance = new MailWatcher(driver, connection);
-  const jobWatcherInstance = new JobWatcher(driver, connection);
-  const scheduleWatcherInstance = new ScheduleWatcher(driver, connection);
-  const cacheWatcherInstance = new CacheWatcher(driver, connection);
-  const notificationWatcherInstance = new NotificationWatcher(
-    driver,
-    connection
-  );
-  const requestWatcherInstance = new RequestWatcher(driver, connection);
-  const httpClientWatcherInstance = new HTTPClientWatcher(driver, connection);
-  const queryWatcherInstance = new QueryWatcher(driver, connection);
-  const exceptionWatcherInstance = new ExceptionWatcher(driver, connection);
-
-  return {
-    logWatcherInstance,
-    mailWatcherInstance,
-    jobWatcherInstance,
-    scheduleWatcherInstance,
-    cacheWatcherInstance,
-    notificationWatcherInstance,
-    requestWatcherInstance,
-    httpClientWatcherInstance,
-    queryWatcherInstance,
-    exceptionWatcherInstance,
-  };
-}
+) => ({
+  logWatcherInstance: new LogWatcher(driver, connection),
+  mailWatcherInstance: new MailWatcher(driver, connection),
+  jobWatcherInstance: new JobWatcher(driver, connection),
+  scheduleWatcherInstance: new ScheduleWatcher(driver, connection),
+  cacheWatcherInstance: new CacheWatcher(driver, connection),
+  notificationWatcherInstance: new NotificationWatcher(driver, connection),
+  requestWatcherInstance: new RequestWatcher(driver, connection),
+  httpClientWatcherInstance: new HTTPClientWatcher(driver, connection),
+  queryWatcherInstance: new QueryWatcher(driver, connection),
+  exceptionWatcherInstance: new ExceptionWatcher(driver, connection),
+});
 
 export const watchers: any = {};
 
@@ -106,22 +93,25 @@ export async function setupLogger(
 
   for (const [key, value] of Object.entries(config.packages)) {
     switch (key) {
-      // case "errors":
-      //   initFunctions[key](exceptionWatcherInstance, value);
-      //   watchers.errors = exceptionWatcherInstance;
-      //   break;
-      // case "jobs":
-      //   initFunctions[key](jobWatcherInstance, value);
-      //   watchers.jobs = jobWatcherInstance;
-      //   break;
-      // case "requests":
-      //   initFunctions[key](queryWatcherInstance, value);
-      //   watchers.requests = requestWatcherInstance;
-      //   break;
-      // case "http":
-      //   initFunctions[key](queryWatcherInstance, value);
-      //   watchers.http = httpClientWatcherInstance;
-      //   break;
+      case "errors":
+        initFunctions[key](exceptionWatcherInstance, value as Errors[]);
+        watchers.errors = exceptionWatcherInstance;
+        break;
+      case "requests":
+        initFunctions[key](queryWatcherInstance, value as Requests);
+        watchers.requests = requestWatcherInstance;
+        break;
+      case "http":
+        initFunctions[key](queryWatcherInstance, value as Http[]);
+        watchers.http = httpClientWatcherInstance;
+        break;
+      case "jobs":
+        initFunctions[key](
+          jobWatcherInstance,
+          value as { name: Jobs; connection: any }[]
+        );
+        watchers.jobs = jobWatcherInstance;
+        break;
       case "logging":
         initFunctions[key](
           logWatcherInstance,
@@ -140,14 +130,20 @@ export async function setupLogger(
         initFunctions[key](mailWatcherInstance, value as { name: Mailer }[]);
         watchers.mailer = mailWatcherInstance;
         break;
-      // case "cache":
-      //   initFunctions[key](cacheWatcherInstance, value);
-      //   watchers.cache = cacheWatcherInstance;
-      //   break;
-      // case "notifications":
-      //   initFunctions[key](notificationWatcherInstance, value);
-      //   watchers.notifications = notificationWatcherInstance;
-      //   break;
+      case "cache":
+        initFunctions[key](
+          cacheWatcherInstance,
+          value as { name: Cache; connection: any }[]
+        );
+        watchers.cache = cacheWatcherInstance;
+        break;
+      case "notifications":
+        initFunctions[key](
+          notificationWatcherInstance,
+          value as { name: Notifications; connection: any }[]
+        );
+        watchers.notifications = notificationWatcherInstance;
+        break;
       default:
         break;
     }
@@ -179,16 +175,16 @@ async function setupMigrations(driver: string, connection: StoreConnection) {
  * Initial functions to setup the logger based on the configuration
  */
 const initFunctions = {
-  errors: exceptionMonkeyPatch,
+  errors: exceptionPatch,
   logging: loggersPatch,
   database: databasePatch,
-  jobs: jobsMonkeyPatch,
+  jobs: jobsPatch,
   scheduler: schedulePatch,
   mailer: mailerPatch,
   cache: cachePatch,
   notifications: notificationPatch,
-  requests: expressRequestPatcher,
-  http: httpPatcher,
+  requests: frameworkPatch,
+  http: httpPatch,
 };
 
 export default setupLogger;

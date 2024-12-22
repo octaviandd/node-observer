@@ -18,6 +18,12 @@ class LogWatcher implements Watcher {
   constructor(storeDriver: StoreDriver, storeConnection: StoreConnection) {
     this.storeDriver = storeDriver;
     this.storeConnection = storeConnection;
+
+    if (this.storeConnection instanceof Promise) {
+      this.storeConnection.then((connection) => {
+        this.storeConnection = connection;
+      });
+    }
   }
 
   async addContent(content: any): Promise<void> {
@@ -29,6 +35,7 @@ class LogWatcher implements Watcher {
       should_display_on_index: true,
       content: JSON.stringify(content),
     };
+
     await this.handleContent(entry, "add");
   }
 

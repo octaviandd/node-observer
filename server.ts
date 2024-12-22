@@ -39,6 +39,7 @@ const mysql2Connection = mysql2.createConnection({
 
 const config: Config = {
   packages: {
+    requests: "express",
     logging: [
       {
         name: "winston",
@@ -48,7 +49,11 @@ const config: Config = {
   },
 };
 
-setupLogger(config, "mysql2", mysql2Connection);
+async function setup() {
+  await setupLogger(config, "mysql2", mysql2Connection);
+}
+
+setup();
 
 const app = express();
 
@@ -58,8 +63,14 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/observatory-api/data", routes);
 
+app.get("/test", (req, res) => {
+  res.send("Hello world");
+});
 // API routes
-app.get("/", async (req, res) => {});
+app.get("/", async (req, res) => {
+  res.status(200).json({ message: "Welcome to the observatory API" });
+  winston.error("Welcome to the observatory API");
+});
 
 const PORT = 9999;
 

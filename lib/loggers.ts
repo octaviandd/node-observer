@@ -21,6 +21,7 @@ import {
   sendGridPatcher,
   uncaughtPatcher,
   unhandledRejectionPatcher,
+  expressPatcher,
 } from "./patchers";
 import {
   Errors,
@@ -39,7 +40,7 @@ import { isPackageInstalled } from "./utils";
  * @param loggerInstance
  * @param errors
  */
-export function exceptionMonkeyPatch(loggerInstance: any, errors: Errors[]) {
+export function exceptionPatch(loggerInstance: any, errors: Errors[]) {
   for (const error of errors) {
     switch (error) {
       case "uncaught":
@@ -87,28 +88,27 @@ export function mailerPatch(loggerInstance: any, mailer: { name: Mailer }[]) {
  */
 export function cachePatch(
   loggerInstance: any,
-  cache: Cache[],
-  connection: any
+  cache: { name: Cache; connection: any }[]
 ) {
   for (const el of cache) {
-    if (!isPackageInstalled(el)) {
+    if (!isPackageInstalled(el.name)) {
       throw new Error(`Package ${el} is not installed`);
     }
 
-    const pkg = require(el);
+    const pkg = require(el.name);
 
-    switch (el) {
+    switch (el.name) {
       case "redis":
-        redisPatcher(loggerInstance, pkg, connection);
+        redisPatcher(loggerInstance, pkg, el.connection);
         break;
       case "ioredis":
-        ioRedisPatcher(loggerInstance, pkg, connection);
+        ioRedisPatcher(loggerInstance, pkg, el.connection);
         break;
       case "node-cache":
-        nodeCachePatcher(loggerInstance, pkg, connection);
+        nodeCachePatcher(loggerInstance, pkg, el.connection);
         break;
       case "lru-cache":
-        lruCachePatcher(loggerInstance, pkg, connection);
+        lruCachePatcher(loggerInstance, pkg, el.connection);
         break;
       default:
         break;
@@ -131,12 +131,14 @@ export function loggersPatch(
       throw new Error(`Package ${log.name} is not installed`);
     }
 
+    const pkg = require(log.name);
+
     switch (log.name) {
       case "bunyan":
         bunyanPatcher(loggerInstance, log.connection);
         break;
       case "winston":
-        winstonPatcher(loggerInstance, log.connection);
+        winstonPatcher(loggerInstance, pkg);
         break;
       case "pino":
         pinoPatcher(loggerInstance, log.connection);
@@ -153,24 +155,23 @@ export function loggersPatch(
  * @param jobs
  * @returns @void
  */
-export function jobsMonkeyPatch(
+export function jobsPatch(
   loggerInstance: any,
-  jobs: Jobs[],
-  connection: any
+  jobs: { name: Jobs; connection: any }[]
 ) {
   for (const job of jobs) {
-    if (!isPackageInstalled(job)) {
-      throw new Error(`Package ${job} is not installed`);
+    if (!isPackageInstalled(job.name)) {
+      throw new Error(`Package ${job.name} is not installed`);
     }
 
-    const pkg = require(job);
+    const pkg = require(job.name);
 
-    switch (job) {
+    switch (job.name) {
       case "bull":
-        bullPatcher(loggerInstance, pkg, connection);
+        bullPatcher(loggerInstance, pkg);
         break;
       case "agenda":
-        agendaPatcher(loggerInstance, pkg, connection);
+        agendaPatcher(loggerInstance, job.connection);
         break;
       default:
         break;
@@ -186,19 +187,18 @@ export function jobsMonkeyPatch(
  */
 export function notificationPatch(
   loggerInstance: any,
-  notifications: Notifications[],
-  connection: any
+  notifications: { name: Notifications; connection: any }[]
 ) {
   for (const notification of notifications) {
-    if (!isPackageInstalled(notification)) {
-      throw new Error(`Package ${notification} is not installed`);
+    if (!isPackageInstalled(notification.name)) {
+      throw new Error(`Package ${notification.name} is not installed`);
     }
 
-    const pkg = require(notification);
+    const pkg = require(notification.name);
 
-    switch (notification) {
+    switch (notification.name) {
       case "pusher":
-        pusherPatcher(loggerInstance, pkg, connection);
+        pusherPatcher(loggerInstance, pkg);
         break;
       default:
         break;
@@ -287,5 +287,23 @@ export function httpPatch(loggerInstance: any, http: Http[]) {
       default:
         break;
     }
+  }
+}
+
+/**
+ *  Monkey patch for framework to record framework operations
+ * @param loggerInstance
+ * @param framework
+ * @returns @void
+ */
+export function frameworkPatch(loggerInstance: any, framework: string) {
+  const pkg = require(framework);
+
+  switch (framework) {
+    case "express":
+      expressPatcher(loggerInstance, pkg);
+      break;
+    default:
+      break;
   }
 }

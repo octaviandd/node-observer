@@ -18,6 +18,12 @@ class RequestWatcher implements Watcher {
   constructor(storeDriver: StoreDriver, storeConnection: StoreConnection) {
     this.storeDriver = storeDriver;
     this.storeConnection = storeConnection;
+
+    if (this.storeConnection instanceof Promise) {
+      this.storeConnection.then((connection) => {
+        this.storeConnection = connection;
+      });
+    }
   }
 
   async addContent(content: any): Promise<void> {
@@ -74,27 +80,49 @@ class RequestWatcher implements Watcher {
           ),
       },
       mysql2: {
-        add: () =>
-          (this.storeConnection as MySql2Connection).query(
-            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES (?, ?, ?, ?, ?, ?)",
-            [
-              entry.uuid,
-              entry.batch_id,
-              entry.family_hash,
-              entry.type,
-              entry.should_display_on_index,
-              entry.content,
-            ]
-          ),
-        view: () =>
-          (this.storeConnection as MySql2Connection).query(
-            "SELECT * FROM observatory_entries WHERE uuid = ?",
-            [id!]
-          ),
-        index: () =>
-          (this.storeConnection as MySql2Connection).query(
-            "SELECT * FROM observatory_entries WHERE type = 'request' ORDER BY created_at DESC"
-          ),
+        add: async () => {
+          console.log("hit mysql2");
+          try {
+            const [results] = await (
+              this.storeConnection as MySql2Connection
+            ).query(
+              "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES (?, ?, ?, ?, ?, ?)",
+              [
+                entry.uuid,
+                entry.batch_id,
+                entry.family_hash,
+                entry.type,
+                entry.should_display_on_index,
+                entry.content,
+              ]
+            );
+            return results;
+          } catch (error) {
+            console.error(error);
+          }
+        },
+
+        view: async () => {
+          try {
+            const [results] = await (
+              this.storeConnection as MySql2Connection
+            ).query("SELECT * FROM observatory_entries WHERE uuid = ?", [id!]);
+            return results;
+          } catch (error) {}
+        },
+
+        index: async () => {
+          try {
+            const [results] = await (
+              this.storeConnection as MySql2Connection
+            ).query(
+              "SELECT * FROM observatory_entries WHERE type = 'request' ORDER BY created_at DESC"
+            );
+            return results;
+          } catch (error) {
+            console.error(error);
+          }
+        },
       },
       postgres: {
         add: () =>
@@ -114,7 +142,7 @@ class RequestWatcher implements Watcher {
             "SELECT * FROM observatory_entries WHERE uuid = $1",
             [id!]
           ),
-        index: () =>
+        index: async () =>
           (this.storeConnection as PgClient).query(
             "SELECT * FROM observatory_entries WHERE type = 'request' ORDER BY created_at DESC"
           ),
@@ -176,8 +204,8 @@ class RequestWatcher implements Watcher {
     try {
       const data = await this.handleContent(null, "index");
       return res.status(200).json(data);
-    } catch {
-      return res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+      return res.status(500).json({ error });
     }
   }
 
@@ -185,8 +213,8 @@ class RequestWatcher implements Watcher {
     try {
       const data = await this.handleContent(null, "view", req.params.requestId);
       return res.status(200).json(data);
-    } catch {
-      return res.status(500).json({ error: "Internal Server Error" });
+    } catch (error) {
+      return res.status(500).json({ error });
     }
   }
 }

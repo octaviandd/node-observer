@@ -130,20 +130,18 @@ export async function bunyanPatcher(loggerInstance: any, connection: any) {
  * @param connection
  * @returns @void
  */
-export async function winstonPatcher(loggerInstance: any, connection: any) {
-  const winston = await connection;
-  const WinstonLoggerProto = winston.__proto__;
-
+export async function winstonPatcher(loggerInstance: any, pkg: any) {
   const FN = {
-    error: WinstonLoggerProto.error,
-    warn: WinstonLoggerProto.warn,
-    info: WinstonLoggerProto.info,
-    log: WinstonLoggerProto.log,
+    error: pkg.error,
+    warn: pkg.warn,
+    info: pkg.info,
+    log: pkg.log,
   };
 
   try {
     for (const [key, value] of Object.entries(FN)) {
-      WinstonLoggerProto[key] = function (...args: any) {
+      pkg[key] = function (...args: any) {
+        console.log("hit winston");
         loggerInstance.addContent({
           level: key,
           package: "winston",
@@ -427,11 +425,7 @@ export async function nodeSchedulePatcher(loggerInstance: any, pkg: any) {
  * @param connection
  * @returns @void
  */
-export async function pusherPatcher(
-  loggerInstance: any,
-  pkg: any,
-  connection: any
-) {
+export async function pusherPatcher(loggerInstance: any, pkg: any) {
   if (pkg) {
     const originalTrigger = pkg.prototype.trigger;
     const originalBatch = pkg.prototype.triggerBatch;
@@ -609,16 +603,19 @@ export async function pgPatcher(
  * @param pkg
  * @returns @void
  */
-export async function expressRequestPatcher(loggerInstance: any, pkg: any) {
+export function expressPatcher(loggerInstance: any, pkg: any) {
   const originalUse = pkg.application.use;
+  const originalGet = pkg.application.get;
 
   try {
-    pkg.application.use = function (...args: any) {
-      const middleware = args[0];
+    pkg.application.get = function (...args: any) {
+      console.log("hittt");
+      const middleware = args[1];
       if (typeof middleware === "function") {
         const originalMiddleware = middleware;
+        console.log("here");
 
-        args[0] = function (req: Request, res: Response, next: NextFunction) {
+        args[1] = function (req: Request, res: Response, next: NextFunction) {
           const start = Date.now();
 
           const originalSend = res.send;
@@ -627,6 +624,7 @@ export async function expressRequestPatcher(loggerInstance: any, pkg: any) {
             return originalSend.call(this, body);
           };
 
+          console.log("inside get");
           res.on("finish", () => {
             const duration = Date.now() - start;
 
@@ -653,11 +651,62 @@ export async function expressRequestPatcher(loggerInstance: any, pkg: any) {
           return originalMiddleware(req, res, next);
         };
       }
-
-      return originalUse.apply(this, args);
+      return originalGet.apply(this, args);
     };
+    console.log("Express 'get' patched");
   } catch (e) {
     console.error(e);
+    console.log('Express "get" patch failed');
+  }
+
+  try {
+    pkg.application.use = function (...args: any) {
+      const middleware = args[0];
+      if (typeof middleware === "function") {
+        const originalMiddleware = middleware;
+
+        args[0] = function (req: Request, res: Response, next: NextFunction) {
+          const start = Date.now();
+
+          const originalSend = res.send;
+          res.send = function (body: any) {
+            res.locals.responseBody = body;
+            return originalSend.call(this, body);
+          };
+
+          console.log("inside use");
+          res.on("finish", () => {
+            const duration = Date.now() - start;
+
+            if (!req.baseUrl.includes("observatory-api")) {
+              loggerInstance.addContent({
+                method: req.method,
+                url: req.url,
+                timestamp: new Date(),
+                status: res.statusCode,
+                duration,
+                ipAddress: req.ip,
+                memoryUsage: process.memoryUsage(),
+                middleware: req.route ? req.route.path : "unknown",
+                hostname: req.hostname,
+                payload: req.body,
+                // session: req.session || {},
+                response: JSON.parse(res.locals.responseBody)[0],
+                headers: req.headers,
+                body: req.body,
+              });
+            }
+          });
+
+          return originalMiddleware(req, res, next);
+        };
+      }
+      return originalUse.apply(this, args);
+    };
+    console.log("Express 'use' patched");
+  } catch (e) {
+    console.error(e);
+    console.log('Express "use" patch failed');
   }
 }
 
@@ -857,11 +906,7 @@ export async function axiosPatcher(loggerInstance: any, pkg: any) {
  * @param connection
  * @returns @void
  */
-export async function bullPatcher(
-  loggerInstance: any,
-  pkg: any,
-  connection: any
-) {
+export async function bullPatcher(loggerInstance: any, pkg: any) {
   const originalProcess = pkg.prototype.process;
   const originalRetryJob = pkg.prototype.retryJob;
   const originalStartJob = pkg.prototype.start;
@@ -907,11 +952,7 @@ export async function bullPatcher(
  * @param connection
  * @returns @void
  */
-export async function agendaPatcher(
-  loggerInstance: any,
-  pkg: any,
-  connection: any
-) {
+export async function agendaPatcher(loggerInstance: any, connection: any) {
   if (connection) {
     const ProtoAgenda = connection.__proto__;
 

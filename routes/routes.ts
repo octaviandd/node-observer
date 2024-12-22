@@ -5,12 +5,14 @@ import { watchers } from "../lib/logger";
 
 const router = Router();
 
-router.get("/", (req, res) => {
-  console.log("Home index");
+router.get("/test", (req, res) => {
+  return res.status(200).json({ message: "Test route" });
 });
 
 // Requests entries...
-router.get("/requests", (req, res) => watchers.requests.getIndex(req, res));
+router.get("/requests", (req, res) => {
+  watchers.requests.getIndex(req, res);
+});
 router.get("/requests/:requestId", (req, res) =>
   watchers.requests.getView(req, res)
 );
