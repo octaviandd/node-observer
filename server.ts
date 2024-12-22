@@ -9,6 +9,8 @@ import mysql from "mysql";
 import * as mysql2 from "mysql2/promise";
 import winston from "winston";
 import { Config } from "./types";
+import pino from "pino";
+import bunyan from "bunyan";
 
 const logger = winston.createLogger({
   level: "info",
@@ -19,6 +21,12 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: "combined.log" }),
   ],
 });
+
+const bunyanLogger = bunyan.createLogger({
+  name: "myapp",
+});
+
+const pinoLogger = pino();
 
 const redisConnection: RedisClientType = createClient({
   url: "redis://localhost:6379",
@@ -45,6 +53,14 @@ const config: Config = {
         name: "winston",
         connection: logger,
       },
+      {
+        name: "pino",
+        connection: pinoLogger,
+      },
+      {
+        name: "bunyan",
+        connection: bunyanLogger,
+      },
     ],
   },
 };
@@ -70,6 +86,8 @@ app.get("/test", (req, res) => {
 app.get("/", async (req, res) => {
   res.status(200).json({ message: "Welcome to the observatory API" });
   winston.error("Welcome to the observatory API");
+  pinoLogger.info("Welcome to the observatory API : PINO");
+  bunyanLogger.info("Welcome to the observatory API : BUNYAN");
 });
 
 const PORT = 9999;

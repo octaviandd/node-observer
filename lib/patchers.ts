@@ -141,7 +141,6 @@ export async function winstonPatcher(loggerInstance: any, pkg: any) {
   try {
     for (const [key, value] of Object.entries(FN)) {
       pkg[key] = function (...args: any) {
-        console.log("hit winston");
         loggerInstance.addContent({
           level: key,
           package: "winston",
