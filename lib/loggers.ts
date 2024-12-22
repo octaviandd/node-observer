@@ -22,6 +22,8 @@ import {
   uncaughtPatcher,
   unhandledRejectionPatcher,
   expressPatcher,
+  log4jsPatcher,
+  nodeCronPatcher,
 } from "./patchers";
 import {
   Errors,
@@ -143,6 +145,9 @@ export function loggersPatch(
       case "pino":
         pinoPatcher(loggerInstance, log.connection);
         break;
+      case "log4js":
+        log4jsPatcher(loggerInstance, pkg, log.connection);
+        break;
       default:
         break;
     }
@@ -226,6 +231,9 @@ export function schedulePatch(
     switch (schedule.name) {
       case "node-schedule":
         nodeSchedulePatcher(loggerInstance, pkg);
+        break;
+      case "node-cron":
+        nodeCronPatcher(loggerInstance, pkg);
         break;
       default:
         break;

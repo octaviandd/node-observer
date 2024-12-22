@@ -7,8 +7,8 @@ import { Client } from "pg";
 import { RedisClientType } from "redis";
 import { Knex } from "knex";
 
-export type Logger = "winston" | "pino" | "bunyan";
-export type Scheduler = "node-schedule";
+export type Logger = "winston" | "pino" | "bunyan" | "log4js";
+export type Scheduler = "node-schedule" | "node-cron";
 export type Mailer = "nodemailer" | "sendgrid";
 export type Cache = "redis" | "ioredis" | "node-cache" | "lru-cache";
 export type Notifications = "pusher";

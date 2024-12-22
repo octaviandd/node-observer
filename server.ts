@@ -11,6 +11,9 @@ import winston from "winston";
 import { Config } from "./types";
 import pino from "pino";
 import bunyan from "bunyan";
+import log4js from "log4js";
+import cron from "node-cron";
+import scheduler from "node-schedule";
 
 const logger = winston.createLogger({
   level: "info",
@@ -21,11 +24,10 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: "combined.log" }),
   ],
 });
-
 const bunyanLogger = bunyan.createLogger({
   name: "myapp",
 });
-
+const log4jsLogger = log4js.getLogger();
 const pinoLogger = pino();
 
 const redisConnection: RedisClientType = createClient({
@@ -48,18 +50,32 @@ const mysql2Connection = mysql2.createConnection({
 const config: Config = {
   packages: {
     requests: "express",
-    logging: [
+    // logging: [
+    //   {
+    //     name: "winston",
+    //     connection: logger,
+    //   },
+    //   {
+    //     name: "pino",
+    //     connection: pinoLogger,
+    //   },
+    //   {
+    //     name: "bunyan",
+    //     connection: bunyanLogger,
+    //   },
+    //   {
+    //     name: "log4js",
+    //     connection: log4jsLogger,
+    //   },
+    // ],
+    scheduler: [
       {
-        name: "winston",
-        connection: logger,
+        name: "node-cron",
+        connection: cron,
       },
       {
-        name: "pino",
-        connection: pinoLogger,
-      },
-      {
-        name: "bunyan",
-        connection: bunyanLogger,
+        name: "node-schedule",
+        connection: scheduler,
       },
     ],
   },
@@ -85,9 +101,18 @@ app.get("/test", (req, res) => {
 // API routes
 app.get("/", async (req, res) => {
   res.status(200).json({ message: "Welcome to the observatory API" });
-  winston.error("Welcome to the observatory API");
-  pinoLogger.info("Welcome to the observatory API : PINO");
-  bunyanLogger.info("Welcome to the observatory API : BUNYAN");
+  // winston.error("Welcome to the observatory API");
+  // pinoLogger.info("Welcome to the observatory API : PINO");
+  // bunyanLogger.info("Welcome to the observatory API : BUNYAN");
+  // log4jsLogger.info("Welcome to the observatory API : LOG4JS");
+
+  cron.schedule("*/1 * * * *", () => {
+    console.log("running a task every minute");
+  });
+
+  scheduler.scheduleJob("*/1 * * * *", () => {
+    console.log("running a task every minute");
+  });
 });
 
 const PORT = 9999;

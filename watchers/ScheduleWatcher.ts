@@ -18,6 +18,12 @@ class ScheduleWatcher implements Watcher {
   constructor(storeDriver: StoreDriver, storeConnection: StoreConnection) {
     this.storeDriver = storeDriver;
     this.storeConnection = storeConnection;
+
+    if (this.storeConnection instanceof Promise) {
+      this.storeConnection.then((connection) => {
+        this.storeConnection = connection;
+      });
+    }
   }
 
   async addContent(content: any): Promise<void> {

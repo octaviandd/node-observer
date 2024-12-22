@@ -92,8 +92,7 @@ export function sendGridPatcher(pkg: any, loggerInstance: any) {
  * @returns @void
  */
 export async function bunyanPatcher(loggerInstance: any, connection: any) {
-  const bunyan = await connection;
-  const BunyanLoggerProto = bunyan.__proto__;
+  const BunyanLoggerProto = connection.__proto__;
 
   const FN = {
     error: BunyanLoggerProto.error,
@@ -166,7 +165,7 @@ export async function winstonPatcher(loggerInstance: any, pkg: any) {
  * @returns @void
  */
 export async function pinoPatcher(logLogger: any, connection: any) {
-  const pino = await connection;
+  const pino = connection;
   const FN = {
     error: pino.error,
     warn: pino.warn,
@@ -366,54 +365,81 @@ export async function nodeCachePatcher(
  * @returns @void
  */
 export async function nodeSchedulePatcher(loggerInstance: any, pkg: any) {
-  if (pkg) {
-    const originalFns: { [key: string]: Function } = {
-      scheduleJob: pkg.scheduleJob,
-      cancelJob: pkg.cancelJob,
-      rescheduleJob: pkg.rescheduleJob,
-    };
+  const originalFns: { [key: string]: Function } = {
+    scheduleJob: pkg.scheduleJob,
+    cancelJob: pkg.cancelJob,
+    rescheduleJob: pkg.rescheduleJob,
+  };
 
-    const logAction = (name: string, info: any, mode: string) => {
-      loggerInstance.addContent({
-        name: name || "",
-        info: info || "",
-        time: new Date(),
-        mode,
-      });
-    };
+  const logAction = (name: string, info: any, mode: string) => {
+    loggerInstance.addContent({
+      name: name || "",
+      info: info || "",
+      time: new Date(),
+      mode,
+      package: "node-schedule",
+    });
+  };
 
-    try {
-      pkg.scheduleJob = function (...args: any) {
-        const hasName = args.length > 2;
-        const name = hasName ? args[0] : "";
-        const info = hasName ? args[1] : args[0];
-        const funcIndex = args.findIndex(
-          (arg: any) => typeof arg === "function"
-        );
-        const originalFn = args[funcIndex];
+  try {
+    pkg.scheduleJob = function (...args: any) {
+      const hasName = args.length > 2;
+      const name = hasName ? args[0] : "";
+      const info = hasName ? args[1] : args[0];
+      const funcIndex = args.findIndex((arg: any) => typeof arg === "function");
+      const originalFn = args[funcIndex];
 
-        logAction(name, info, "set");
+      logAction(name, info, "set");
 
-        args[funcIndex] = function (...innerArgs: any) {
-          logAction(name, info, "run");
-          return originalFn.apply(this, innerArgs);
-        };
-
-        console.log("Node schedule patched");
-        return originalFns.scheduleJob.apply(this, args);
+      args[funcIndex] = function (...innerArgs: any) {
+        logAction(name, info, "run");
+        return originalFn.apply(this, innerArgs);
       };
 
-      ["cancelJob", "rescheduleJob"].forEach((method) => {
-        pkg[method] = function (...args: any) {
-          logAction(args[0], args[1], method.replace("Job", "").toLowerCase());
-          console.log("Node cancel and reschedule patched");
-          return originalFns[method].apply(this, args);
-        };
-      });
-    } catch (e) {
-      console.error(e);
-      console.log("Node schedule patch failed");
+      console.log("Node schedule patched");
+      return originalFns.scheduleJob.apply(this, args);
+    };
+
+    ["cancelJob", "rescheduleJob"].forEach((method) => {
+      pkg[method] = function (...args: any) {
+        logAction(args[0], args[1], method.replace("Job", "").toLowerCase());
+        console.log("Node cancel and reschedule patched");
+        return originalFns[method].apply(this, args);
+      };
+    });
+  } catch (e) {
+    console.error(e);
+    console.log("Node schedule patch failed");
+  }
+}
+
+export function nodeCronPatcher(loggerInstance: any, pkg: any) {
+  const originalSchedule = pkg.schedule;
+  const originalValidate = pkg.validate;
+  const originalGetTasks = pkg.getTasks;
+
+  const FN = {
+    schedule: originalSchedule,
+    validate: originalValidate,
+    getTasks: originalGetTasks,
+  };
+
+  try {
+    for (const [key, value] of Object.entries(FN)) {
+      pkg[key] = function (...args: any) {
+        loggerInstance.addContent({
+          type: key,
+          package: "node-cron",
+          data: args,
+          time: new Date(),
+        });
+        return value.apply(this, args);
+      };
+      console.log(`Node cron ${key} method patched`);
     }
+  } catch (e) {
+    console.error(e);
+    console.log("Node cron patch failed");
   }
 }
 
@@ -1035,33 +1061,33 @@ export function fetchPatch(logger: any) {
  * @returns @void
  */
 export function log4jsPatcher(loggerInstance: any, pkg: any, connection: any) {
-  if (connection) {
-    const ProtoLog4js = connection.__proto__;
+  const ProtoLog4js = connection.__proto__;
 
-    const FN = {
-      error: ProtoLog4js.error,
-      warn: ProtoLog4js.warn,
-      info: ProtoLog4js.info,
-      debug: ProtoLog4js.debug,
-      trace: ProtoLog4js.trace,
-      fatal: ProtoLog4js.fatal,
-    };
+  const FN = {
+    error: ProtoLog4js.error,
+    warn: ProtoLog4js.warn,
+    info: ProtoLog4js.info,
+    debug: ProtoLog4js.debug,
+    trace: ProtoLog4js.trace,
+    fatal: ProtoLog4js.fatal,
+  };
 
-    try {
-      for (const [key, value] of Object.entries(FN)) {
-        ProtoLog4js[key] = function (...args: any) {
-          loggerInstance.addContent({
-            level: key,
-            package: "log4js",
-            message: args[0],
-            time: new Date(),
-          });
-          return value.apply(this, args);
-        };
-      }
-    } catch (e) {
-      console.error(e);
+  try {
+    for (const [key, value] of Object.entries(FN)) {
+      ProtoLog4js[key] = function (...args: any) {
+        loggerInstance.addContent({
+          level: key,
+          package: "log4js",
+          message: args[0],
+          time: new Date(),
+        });
+        return value.apply(this, args);
+      };
+      console.log(`Log4js ${key} patched`);
     }
+  } catch (e) {
+    console.error(e);
+    console.log("Log4js patch failed");
   }
 }
 
