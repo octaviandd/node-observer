@@ -1,48 +1,56 @@
 /** @format */
 import { Request, Response, NextFunction } from "express";
+import { MongoClient } from "mongodb";
+import { Connection as MySql2Connection } from "mysql2/promise";
+import { Connection as MySqlConnection } from "mysql";
+import { Client } from "pg";
+import { RedisClientType } from "redis";
+import { Knex } from "knex";
 
-type Database = "redis" | "mongodb" | "postgres" | "mysql";
-type Logger = "winston" | "pino" | "bunyan";
-type Scheduler = "node-schedule";
-type Mailer = "nodemailer" | "sendgrid" | "mailgun";
-type Cache = "redis" | "ioredis" | "node-cache";
-type Notifications = "onesignal" | "firebase" | "pusher";
-type Requests = "express";
-type Http = "axios" | "http" | "https" | "fetch";
-type Jobs = "bull" | "agenda";
-type Errors = "uncaught" | "unhandled";
+export type Logger = "winston" | "pino" | "bunyan" | "log4js";
+export type Scheduler = "node-schedule" | "node-cron";
+export type Mailer = "nodemailer" | "sendgrid";
+export type Cache = "redis" | "ioredis" | "node-cache" | "lru-cache";
+export type Notifications = "pusher";
+export type Requests = "express";
+export type Http = "axios" | "http" | "https" | "fetch";
+export type Jobs = "bull" | "agenda";
+export type Errors = "uncaught" | "unhandled";
+// what to do with database logging for queries.
 
-export interface config {
-  database: "redis" | "mongodb" | "postgres" | "mysql";
+export interface Config {
   packages: {
-    errors: Errors[];
-    logging?: {
-      name: Logger[];
-      connection: {} | Function;
-    }
-    database?: {
-      name: Database[];
-      connection: {} | Function;
-    }
-    jobs?: Jobs[];
-    scheduler?: {
-      name: Scheduler[];
-      connection: {} | Function;
-    }
-    mailer?: {
-      name: Mailer[];
-      connection: {} | Function;
-    }
-    cache?: {
-      name: Cache[];
-      connection: {} | Function;
-    };
-    notifications?: {
-      name: Notifications[];
-      connection: {} | Function;
-    }
-    requests?: Requests[];
+    errors?: Errors[];
+    requests: Requests;
     http?: Http[];
+    logging?: Array<{
+      name: Logger;
+      connection: {} | Function;
+    }>;
+    database?: Array<{
+      name: StoreDriver;
+      connection: {} | Function;
+    }>;
+    jobs?: Array<{
+      name: Jobs;
+      connection: {} | Function;
+    }>;
+    scheduler?: Array<{
+      name: Scheduler;
+      connection: {} | Function;
+    }>;
+    mailer?: Array<{
+      name: Mailer;
+      connection: {} | Function;
+    }>;
+    cache?: Array<{
+      name: Cache;
+      connection: {} | Function;
+    }>;
+    notifications?: Array<{
+      name: Notifications;
+      connection: {} | Function;
+    }>;
   };
 }
 
@@ -76,3 +84,20 @@ export type MiddleWareParams<T extends LoggerType> = T extends "request"
   : T extends "cache"
   ? { key: string; value: string }
   : never;
+
+export type StoreConnection =
+  | MongoClient
+  | Client
+  | RedisClientType
+  | MySqlConnection
+  | MySql2Connection
+  | Knex
+  | Promise<MySql2Connection>;
+
+export type StoreDriver =
+  | "redis"
+  | "mysql"
+  | "mysql2"
+  | "mongodb"
+  | "postgres"
+  | "knex";

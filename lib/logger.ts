@@ -1,15 +1,27 @@
 /** @format */
 
 import { up as redisUp } from "../database/migrations/redis_observatory";
+import { up as mysql2Up } from "../database/migrations/mysql2_observatory";
 import { up as mysqlUp } from "../database/migrations/mysql_observatory";
 import { up as postgresUp } from "../database/migrations/postgresql_observatory";
 import { up as mongodbUp } from "../database/migrations/mongo_observatory";
 import { MongoClient } from "mongodb";
 import { Client } from "pg";
 import { RedisClientType } from "redis";
-import { Connection } from "mysql2/promise";
-import { collector } from "../middleware/inbuilt/collector";
-import {cachePatch, mailerMonkeyPatch, loggersPatch, notificationPatch, schedulePatch, jobsMonkeyPatch, databasePatch} from "./loggers"
+import { Connection as MySql2Connection } from "mysql2/promise";
+import { Connection as MySqlConnection } from "mysql";
+import {
+  cachePatch,
+  mailerPatch,
+  loggersPatch,
+  notificationPatch,
+  schedulePatch,
+  jobsPatch,
+  databasePatch,
+  exceptionPatch,
+  frameworkPatch,
+  httpPatch,
+} from "./loggers";
 import LogWatcher from "../watchers/LogWatcher";
 import MailWatcher from "../watchers/MailWatcher";
 import JobWatcher from "../watchers/JobWatcher";
@@ -19,108 +31,160 @@ import NotificationWatcher from "../watchers/NotificationWatcher";
 import RequestWatcher from "../watchers/RequestWatcher";
 import HTTPClientWatcher from "../watchers/HTTPClientWatcher";
 import QueryWatcher from "../watchers/QueryWatcher";
-import { requestPatch } from "./patchers";
+import ExceptionWatcher from "../watchers/ExceptionWatcher";
+import {
+  Errors,
+  Logger,
+  Mailer,
+  Scheduler,
+  StoreConnection,
+  StoreDriver,
+  Cache,
+  Notifications,
+  Jobs,
+  Config,
+  Http,
+  Requests,
+} from "../types";
 
+export const instanceCreator = (
+  driver: StoreDriver,
+  connection: StoreConnection
+) => ({
+  logWatcherInstance: new LogWatcher(driver, connection),
+  mailWatcherInstance: new MailWatcher(driver, connection),
+  jobWatcherInstance: new JobWatcher(driver, connection),
+  scheduleWatcherInstance: new ScheduleWatcher(driver, connection),
+  cacheWatcherInstance: new CacheWatcher(driver, connection),
+  notificationWatcherInstance: new NotificationWatcher(driver, connection),
+  requestWatcherInstance: new RequestWatcher(driver, connection),
+  httpClientWatcherInstance: new HTTPClientWatcher(driver, connection),
+  queryWatcherInstance: new QueryWatcher(driver, connection),
+  exceptionWatcherInstance: new ExceptionWatcher(driver, connection),
+});
+
+export const watchers: any = {};
+
+/**
+ * Initial entry point for setting up the logger
+ * @param config
+ * @param driver
+ * @param connection
+ * @returns @string
+ */
 export async function setupLogger(
-  config: any,
-  databaseConnection: MongoClient | Client | RedisClientType | Connection
+  config: Config,
+  driver: StoreDriver,
+  connection: StoreConnection
 ): Promise<string> {
-  const databaseType = config.database;
-  setupMigrations(databaseType, databaseConnection);
+  await setupMigrations(driver, connection);
+  const {
+    queryWatcherInstance,
+    logWatcherInstance,
+    mailWatcherInstance,
+    jobWatcherInstance,
+    notificationWatcherInstance,
+    scheduleWatcherInstance,
+    cacheWatcherInstance,
+    requestWatcherInstance,
+    httpClientWatcherInstance,
+    exceptionWatcherInstance,
+  } = instanceCreator(driver, connection);
 
-  const errors = config.packages.has("errors");
-  const logging = config.packages.has("logging");
-  const database = config.packages.has("database");
-  const jobs = config.packages.has("jobs");
-  const scheduler = config.packages.has("scheduler");
-  const mailer = config.packages.has("mailer");
-  const cache = config.packages.has("cache");
-  const notifications = config.packages.has("notifications");
-  const requests = config.packages.has("requests");
-  const http = config.packages.has("http");
-
-  errors && initErrors(errors.name);
-  logging  && initLogging(logging.name);
-  database  && initDatabase(database.name);
-  jobs  && initJobs(jobs.name);
-  scheduler  && initScheduler(scheduler.name);
-  mailer  && initMailer(mailer.name);
-  cache  && initCache(cache.name);
-  notifications  && initNotifications(notifications.name);
-  requests  && initRequests(requests.name);
-  http  && initHttp(http.name);
-
+  for (const [key, value] of Object.entries(config.packages)) {
+    switch (key) {
+      case "errors":
+        initFunctions[key](exceptionWatcherInstance, value as Errors[]);
+        watchers.errors = exceptionWatcherInstance;
+        break;
+      case "requests":
+        initFunctions[key](queryWatcherInstance, value as Requests);
+        watchers.requests = requestWatcherInstance;
+        break;
+      case "http":
+        initFunctions[key](queryWatcherInstance, value as Http[]);
+        watchers.http = httpClientWatcherInstance;
+        break;
+      case "jobs":
+        initFunctions[key](
+          jobWatcherInstance,
+          value as { name: Jobs; connection: any }[]
+        );
+        watchers.jobs = jobWatcherInstance;
+        break;
+      case "logging":
+        initFunctions[key](
+          logWatcherInstance,
+          value as { name: Logger; connection: any }[]
+        );
+        watchers.logging = logWatcherInstance;
+        break;
+      case "scheduler":
+        initFunctions[key](
+          scheduleWatcherInstance,
+          value as { name: Scheduler; connection: any }[]
+        );
+        watchers.scheduler = scheduleWatcherInstance;
+        break;
+      case "mailer":
+        initFunctions[key](mailWatcherInstance, value as { name: Mailer }[]);
+        watchers.mailer = mailWatcherInstance;
+        break;
+      case "cache":
+        initFunctions[key](
+          cacheWatcherInstance,
+          value as { name: Cache; connection: any }[]
+        );
+        watchers.cache = cacheWatcherInstance;
+        break;
+      case "notifications":
+        initFunctions[key](
+          notificationWatcherInstance,
+          value as { name: Notifications; connection: any }[]
+        );
+        watchers.notifications = notificationWatcherInstance;
+        break;
+      default:
+        break;
+    }
+  }
+  console.log("Observatory is ready to use!");
   return "Observatory is ready to use!";
 }
 
-async function setupMigrations(databaseType: string, databaseConnection: MongoClient | Client | RedisClientType | Connection) {
-  if (databaseType === "redis") {
-    await redisUp(databaseConnection as RedisClientType);
-  } else if (databaseType === "mongodb") {
-    await mongodbUp(databaseConnection as MongoClient);
-  } else if (databaseType === "postgres") {
-    await postgresUp(databaseConnection as Client);
-  } else if (databaseType === "mysql") {
-    await mysqlUp(databaseConnection as Connection);
+/**
+ * Setup the migrations depending on the database/storage driver.
+ * @param driver
+ * @param connection
+ */
+async function setupMigrations(driver: string, connection: StoreConnection) {
+  if (driver === "redis") {
+    await redisUp(connection as RedisClientType);
+  } else if (driver === "mongodb") {
+    await mongodbUp(connection as MongoClient);
+  } else if (driver === "postgres") {
+    await postgresUp(connection as Client);
+  } else if (driver === "mysql") {
+    await mysqlUp(connection as MySqlConnection);
+  } else if (driver === "mysql2") {
+    await mysql2Up(connection as MySql2Connection);
   }
 }
 
-function initErrors(errors: string[]) {
-  const loggerInstance = new LogWatcher();
-  collector.exceptionMonkeyPatch(loggerInstance, errors);
-}
-
-function initLogging(logging: string[]) {
-  const loggerInstance = new LogWatcher();
-  loggersPatch(loggerInstance, logging);
-  return logging;
-}
-
-function initDatabase(database: string[]) {
-  const loggerInstance = new QueryWatcher();
-  databasePatch(loggerInstance, database);
-  return database;
-}
-
-function initJobs(jobs: string[]) {
-  const loggerInstance = new JobWatcher()
-  jobsMonkeyPatch(loggerInstance, jobs);
-  return jobs;
-}
-
-function initScheduler(scheduler: string[]) {
-  const loggerInstance = new ScheduleWatcher();
-  schedulePatch(loggerInstance, scheduler);
-  return scheduler;
-}
-
-function initMailer(mailer: string[]) {
-  const loggerInstance = new MailWatcher()
-  mailerMonkeyPatch(loggerInstance, mailer);
-  return mailer;
-}
-
-function initCache(cache: string[]) {
-  const loggerInstance = new CacheWatcher()
-  cachePatch(loggerInstance, cache);
-  return cache;
-}
-
-function initNotifications(notifications: string[]) {
-  const loggerInstance = new NotificationWatcher()
-  notificationPatch(loggerInstance, notifications);
-  return notifications;
-}
-
-function initRequests(requests: string[]) {
-  const loggerInstance = new RequestWatcher()
-  requestPatch(loggerInstance, requests);
-  return requests;
-}
-
-function initHttp(http: string[]) {
-  const loggerInstance = new HTTPClientWatcher()
-  return http;
-}
+/**
+ * Initial functions to setup the logger based on the configuration
+ */
+const initFunctions = {
+  errors: exceptionPatch,
+  logging: loggersPatch,
+  database: databasePatch,
+  jobs: jobsPatch,
+  scheduler: schedulePatch,
+  mailer: mailerPatch,
+  cache: cachePatch,
+  notifications: notificationPatch,
+  requests: frameworkPatch,
+  http: httpPatch,
+};
 
 export default setupLogger;

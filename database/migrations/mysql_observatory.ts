@@ -1,17 +1,21 @@
 /** @format */
 
-import * as mysql from "mysql2/promise";
+import * as mysql from "mysql";
 
-export async function up(connection: mysql.Connection): Promise<void> {
+export function up(connection: mysql.Connection): void {
+  // Ensure the connection is established
+  if (connection.state === "disconnected") {
+    connection.connect();
+  }
   // Create observatory_monitoring table
-  await connection.execute(`
+  connection.query(`
     CREATE TABLE observatory_monitoring (
       tag VARCHAR(255) PRIMARY KEY
     );
   `);
 
   // Create observatory_entries table
-  await connection.execute(`
+  connection.query(`
     CREATE TABLE observatory_entries (
       sequence BIGINT AUTO_INCREMENT PRIMARY KEY,
       uuid CHAR(36) NOT NULL UNIQUE,
@@ -29,7 +33,7 @@ export async function up(connection: mysql.Connection): Promise<void> {
   `);
 
   // Create observatory_entries_tags table
-  await connection.execute(`
+  connection.query(`
     CREATE TABLE observatory_entries_tags (
       entry_uuid CHAR(36) NOT NULL,
       tag VARCHAR(255) NOT NULL,
@@ -41,7 +45,10 @@ export async function up(connection: mysql.Connection): Promise<void> {
 }
 
 export async function down(connection: mysql.Connection): Promise<void> {
-  await connection.execute("DROP TABLE IF EXISTS observatory_entries_tags;");
-  await connection.execute("DROP TABLE IF EXISTS observatory_entries;");
-  await connection.execute("DROP TABLE IF EXISTS observatory_monitoring;");
+  if (connection.state === "disconnected") {
+    connection.connect();
+  }
+  connection.query("DROP TABLE IF EXISTS observatory_entries_tags;");
+  connection.query("DROP TABLE IF EXISTS observatory_entries;");
+  connection.query("DROP TABLE IF EXISTS observatory_monitoring;");
 }

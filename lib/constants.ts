@@ -1,5 +1,8 @@
 /** @format */
 
+/**
+ * Redis commands and their arguments
+ */
 export const redisCommandArgs: { [key: string]: string[] } = Object.freeze({
   get: ["key"],
   set: ["key", "value"],
@@ -67,6 +70,9 @@ export const redisCommandArgs: { [key: string]: string[] } = Object.freeze({
   zIncrBy: ["key", "increment", "memberex"],
 });
 
+/**
+ * Node cache commands and their arguments
+ */
 export const nodeCacheCommandsArgs: { [key: string]: string[] } = Object.freeze(
   {
     get: ["key"],
@@ -85,37 +91,40 @@ export const nodeCacheCommandsArgs: { [key: string]: string[] } = Object.freeze(
   }
 );
 
+/**
+ * IO Redis commands and their arguments
+ */
 export const ioRedisCommandsArgs: { [key: string]: string[] } = Object.freeze({
-    get: ["key"],
-    set: ["key", "value"],
-    hset: ["hash", "field", "value"],
-    hget: ["hash", "field"],
-    hgetall: ["hash"],
-    del: ["key"],
-    exists: ["key"],
-    incr: ["key"],
-    decr: ["key"],
-    append: ["key", "value"],
-    hdel: ["hash", "field"],
-    hexists: ["hash", "field"],
-    hincrby: ["hash", "field", "increment"],
-    hlen: ["hash"],
-    lpush: ["key", "value"],
-    lopo: ["key"],
-    llen: ["key"],
-    lindex: ["key", "index"],
-    rpush: ["key", "value"],
-    rpop: ["key"],
-    sadd: ["key", "value"],
-    srem: ["key", "value"],
-    scard: ["key"],
-    smembers: ["key"],
-    zadd: ["key", "score", "value"],
-    zrem: ["key", "value"],
-    zcard: ["key"],
-    zrange: ["key", "start", "stop"],
-    zrank: ["key", "member"],
-    zscore: ["key", "member"],
-    zrevrank: ["key", "member"],
-    zincrby: ["key", "increment", "member"],
+  get: ["key"],
+  set: ["key", "value"],
+  hset: ["hash", "field", "value"],
+  hget: ["hash", "field"],
+  hgetall: ["hash"],
+  del: ["key"],
+  exists: ["key"],
+  incr: ["key"],
+  decr: ["key"],
+  append: ["key", "value"],
+  hdel: ["hash", "field"],
+  hexists: ["hash", "field"],
+  hincrby: ["hash", "field", "increment"],
+  hlen: ["hash"],
+  lpush: ["key", "value"],
+  lopo: ["key"],
+  llen: ["key"],
+  lindex: ["key", "index"],
+  rpush: ["key", "value"],
+  rpop: ["key"],
+  sadd: ["key", "value"],
+  srem: ["key", "value"],
+  scard: ["key"],
+  smembers: ["key"],
+  zadd: ["key", "score", "value"],
+  zrem: ["key", "value"],
+  zcard: ["key"],
+  zrange: ["key", "start", "stop"],
+  zrank: ["key", "member"],
+  zscore: ["key", "member"],
+  zrevrank: ["key", "member"],
+  zincrby: ["key", "increment", "member"],
 });

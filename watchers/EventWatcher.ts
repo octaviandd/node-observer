@@ -1,18 +1,23 @@
 /** @format */
 
-import Watcher from "./Watcher";
-import { v4 as uuidv4 } from "uuid";
+import { MongoClient } from "mongodb";
+import { Client as PgClient } from "pg";
+import { RedisClientType } from "redis";
+import type { Connection as MySqlConnection } from "mysql";
+import type { Connection as MySql2Connection } from "mysql2/promise";
 import { Request, Response } from "express";
-
-type ConnectionType = "mysql" | "postgres" | "redis" | "mongodb";
+import { StoreConnection, StoreDriver } from "../types";
+import { v4 as uuidv4 } from "uuid";
+import Watcher from "./Watcher";
 
 class EventWatcher implements Watcher {
-  type: string;
-  private connectionType: ConnectionType;
+  type = "event";
+  private storeDriver: StoreDriver;
+  private storeConnection: StoreConnection;
 
-  constructor(connectionType: ConnectionType, private connection: any) {
-    this.type = "event";
-    this.connectionType = connectionType;
+  constructor(storeDriver: StoreDriver, storeConnection: StoreConnection) {
+    this.storeDriver = storeDriver;
+    this.storeConnection = storeConnection;
   }
 
   public async addContent(content: any): Promise<void> {
@@ -22,53 +27,148 @@ class EventWatcher implements Watcher {
       family_hash: uuidv4(),
       type: this.type,
       should_display_on_index: true,
-      content: JSON.stringify(content),
+      content,
     };
-    this.handleContent(newEntry, "add");
+    await this.handleContent(newEntry, "add");
   }
 
-  handleContent(entry: any, action: "add" | "view" | "index", id?: string) {
+  private async handleContent(
+    entry: any,
+    action: "add" | "view" | "index",
+    id?: string
+  ): Promise<any> {
     const queries = {
+      knex: {
+        add: () =>
+          (this.storeConnection as any)("observatory_entries").insert(entry),
+        view: () =>
+          (this.storeConnection as any)("observatory_entries")
+            .where({ uuid: id })
+            .first(),
+        index: () =>
+          (this.storeConnection as any)("observatory_entries")
+            .where({ type: "event" })
+            .orderBy("created_at", "desc"),
+      },
       mysql: {
         add: () =>
-          this.connection.query(
+          (this.storeConnection as MySqlConnection).query(
             "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES (?, ?, ?, ?, ?, ?)",
-            [entry.uuid, entry.batch_id, entry.family_hash, entry.type, entry.should_display_on_index, entry.content]
+            [
+              entry.uuid,
+              entry.batch_id,
+              entry.family_hash,
+              entry.type,
+              entry.should_display_on_index,
+              entry.content,
+            ]
           ),
         view: () =>
-          this.connection.query("SELECT * FROM observatory_entries WHERE uuid = ?", [id]),
+          (this.storeConnection as MySqlConnection).query(
+            "SELECT * FROM observatory_entries WHERE uuid = ?",
+            [id!]
+          ),
         index: () =>
-          this.connection.query("SELECT * FROM observatory_entries WHERE type = 'event' ORDER BY created_at DESC"),
+          (this.storeConnection as MySqlConnection).query(
+            "SELECT * FROM observatory_entries WHERE type = 'event' ORDER BY created_at DESC"
+          ),
+      },
+      mysql2: {
+        add: () =>
+          (this.storeConnection as MySql2Connection).query(
+            "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES (?, ?, ?, ?, ?, ?)",
+            [
+              entry.uuid,
+              entry.batch_id,
+              entry.family_hash,
+              entry.type,
+              entry.should_display_on_index,
+              entry.content,
+            ]
+          ),
+        view: () =>
+          (this.storeConnection as MySql2Connection).query(
+            "SELECT * FROM observatory_entries WHERE uuid = ?",
+            [id!]
+          ),
+        index: () =>
+          (this.storeConnection as MySql2Connection).query(
+            "SELECT * FROM observatory_entries WHERE type = 'event' ORDER BY created_at DESC"
+          ),
       },
       postgres: {
         add: () =>
-          this.connection.query(
+          (this.storeConnection as PgClient).query(
             "INSERT INTO observatory_entries (uuid, batch_id, family_hash, type, should_display_on_index, content) VALUES ($1, $2, $3, $4, $5, $6)",
-            [entry.uuid, entry.batch_id, entry.family_hash, entry.type, entry.should_display_on_index, entry.content]
+            [
+              entry.uuid,
+              entry.batch_id,
+              entry.family_hash,
+              entry.type,
+              entry.should_display_on_index,
+              entry.content,
+            ]
           ),
         view: () =>
-          this.connection.query("SELECT * FROM observatory_entries WHERE uuid = $1", [id]),
+          (this.storeConnection as PgClient).query(
+            "SELECT * FROM observatory_entries WHERE uuid = $1",
+            [id!]
+          ),
         index: () =>
-          this.connection.query("SELECT * FROM observatory_entries WHERE type = 'event' ORDER BY created_at DESC"),
+          (this.storeConnection as PgClient).query(
+            "SELECT * FROM observatory_entries WHERE type = 'event' ORDER BY created_at DESC"
+          ),
       },
       redis: {
-        add: () => this.connection.set(entry.uuid, JSON.stringify(entry)),
-        view: () => this.connection.get(id),
-        index: () => this.connection.keys("*"),
+        add: () =>
+          (this.storeConnection as RedisClientType).set(
+            entry.uuid,
+            JSON.stringify(entry)
+          ),
+        view: async () =>
+          (this.storeConnection as RedisClientType)
+            .get(id!)
+            .then((data) => (data ? JSON.parse(data) : null)),
+        index: async () => {
+          const keys = await (this.storeConnection as RedisClientType).keys(
+            "*"
+          );
+          const entries = [];
+          for (const key of keys) {
+            const val = await (this.storeConnection as RedisClientType).get(
+              key
+            );
+            if (val) {
+              const parsed = JSON.parse(val);
+              if (parsed.type === "event") {
+                entries.push(parsed);
+              }
+            }
+          }
+          return entries;
+        },
       },
       mongodb: {
-        add: () => this.connection.collection("observatory_entries").insertOne(entry),
+        add: () =>
+          (this.storeConnection as MongoClient)
+            .db()
+            .collection("observatory_entries")
+            .insertOne(entry),
         view: () =>
-          this.connection.collection("observatory_entries").findOne({ uuid: id }),
+          (this.storeConnection as MongoClient)
+            .db()
+            .collection("observatory_entries")
+            .findOne({ uuid: id }),
         index: () =>
-          this.connection
+          (this.storeConnection as MongoClient)
+            .db()
             .collection("observatory_entries")
             .find({ type: "event" })
             .sort({ created_at: -1 })
             .toArray(),
       },
     };
-    return queries[this.connectionType]?.[action]?.();
+    return (await queries[this.storeDriver]?.[action]?.()) as any;
   }
 
   public async getIndex(req: Request, res: Response): Promise<Response> {

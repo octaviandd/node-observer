@@ -1,4 +1,3 @@
-/** @format */
 
 import { Request, Response } from "express";
 
@@ -7,7 +6,6 @@ interface Watcher {
   getIndex(req: Request, res: Response): Promise<Response>;
   getView(req: Request, res: Response): Promise<Response>;
   addContent(content: unknown): void;
-  handleContent(entry: any, action: "add" | "view" | "index", id?: string): void;
 }
 
 export default Watcher;
