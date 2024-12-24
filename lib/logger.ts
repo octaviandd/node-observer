@@ -91,40 +91,45 @@ export async function setupLogger(
     exceptionWatcherInstance,
   } = instanceCreator(driver, connection);
 
+  watchers.errors = exceptionWatcherInstance;
+  watchers.requests = requestWatcherInstance;
+  watchers.http = httpClientWatcherInstance;
+  watchers.jobs = jobWatcherInstance;
+  watchers.logging = logWatcherInstance;
+  watchers.scheduler = scheduleWatcherInstance;
+  watchers.mailer = mailWatcherInstance;
+  watchers.cache = cacheWatcherInstance;
+  watchers.notifications = notificationWatcherInstance;
+  watchers.query = queryWatcherInstance;
+
   for (const [key, value] of Object.entries(config.packages)) {
     switch (key) {
       case "errors":
         initFunctions[key](exceptionWatcherInstance, value as Errors[]);
-        watchers.errors = exceptionWatcherInstance;
         break;
       case "requests":
         initFunctions[key](queryWatcherInstance, value as Requests);
-        watchers.requests = requestWatcherInstance;
         break;
       case "http":
         initFunctions[key](queryWatcherInstance, value as Http[]);
-        watchers.http = httpClientWatcherInstance;
         break;
       case "jobs":
         initFunctions[key](
           jobWatcherInstance,
           value as { name: Jobs; connection: any }[]
         );
-        watchers.jobs = jobWatcherInstance;
         break;
       case "logging":
         initFunctions[key](
           logWatcherInstance,
           value as { name: Logger; connection: any }[]
         );
-        watchers.logging = logWatcherInstance;
         break;
       case "scheduler":
         initFunctions[key](
           scheduleWatcherInstance,
           value as { name: Scheduler; connection: any }[]
         );
-        watchers.scheduler = scheduleWatcherInstance;
         break;
       case "mailer":
         initFunctions[key](mailWatcherInstance, value as { name: Mailer }[]);
@@ -135,14 +140,12 @@ export async function setupLogger(
           cacheWatcherInstance,
           value as { name: Cache; connection: any }[]
         );
-        watchers.cache = cacheWatcherInstance;
         break;
       case "notifications":
         initFunctions[key](
           notificationWatcherInstance,
           value as { name: Notifications; connection: any }[]
         );
-        watchers.notifications = notificationWatcherInstance;
         break;
       default:
         break;

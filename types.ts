@@ -16,6 +16,7 @@ export type Requests = "express";
 export type Http = "axios" | "http" | "https" | "fetch";
 export type Jobs = "bull" | "agenda";
 export type Errors = "uncaught" | "unhandled";
+export type Queries = "knex" | "sequelize" | "typeorm" | "prisma" | "mysql2" | "mysql" | "mongodb" | "pg";
 // what to do with database logging for queries.
 
 export interface Config {
