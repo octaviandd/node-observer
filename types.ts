@@ -55,6 +55,21 @@ export interface Config {
   };
 }
 
+export interface AlternativeConfig {
+  packages: {
+    cache: Cache[]
+    database: StoreDriver[]
+    errors: Errors[]
+    http: Http[]
+    jobs: Jobs[]
+    logging: Logger[]
+    mailer: Mailer[]
+    notifications: Notifications[]
+    requests: Requests
+    scheduler: Scheduler[]
+  };
+}
+
 export type LoggerType =
   | "event"
   | "job"

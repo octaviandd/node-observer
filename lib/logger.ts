@@ -1,5 +1,5 @@
 /** @format */
-
+import "./patchers/index";
 import { up as redisUp } from "../database/migrations/redis_observatory";
 import { up as mysql2Up } from "../database/migrations/mysql2_observatory";
 import { up as mysqlUp } from "../database/migrations/mysql_observatory";
@@ -63,7 +63,18 @@ export const instanceCreator = (
   exceptionWatcherInstance: new ExceptionWatcher(driver, connection),
 });
 
-export const watchers: any = {};
+export const watchers: any = {
+  errors: null,
+  requests: null,
+  http: null,
+  jobs: null,
+  logging: null,
+  scheduler: null,
+  mailer: null,
+  cache: null,
+  notifications: null,
+  query: null,
+};
 
 /**
  * Initial entry point for setting up the logger
@@ -102,55 +113,55 @@ export async function setupLogger(
   watchers.notifications = notificationWatcherInstance;
   watchers.query = queryWatcherInstance;
 
-  for (const [key, value] of Object.entries(config.packages)) {
-    switch (key) {
-      case "errors":
-        initFunctions[key](exceptionWatcherInstance, value as Errors[]);
-        break;
-      case "requests":
-        initFunctions[key](queryWatcherInstance, value as Requests);
-        break;
-      case "http":
-        initFunctions[key](queryWatcherInstance, value as Http[]);
-        break;
-      case "jobs":
-        initFunctions[key](
-          jobWatcherInstance,
-          value as { name: Jobs; connection: any }[]
-        );
-        break;
-      case "logging":
-        initFunctions[key](
-          logWatcherInstance,
-          value as { name: Logger; connection: any }[]
-        );
-        break;
-      case "scheduler":
-        initFunctions[key](
-          scheduleWatcherInstance,
-          value as { name: Scheduler; connection: any }[]
-        );
-        break;
-      case "mailer":
-        initFunctions[key](mailWatcherInstance, value as { name: Mailer }[]);
-        watchers.mailer = mailWatcherInstance;
-        break;
-      case "cache":
-        initFunctions[key](
-          cacheWatcherInstance,
-          value as { name: Cache; connection: any }[]
-        );
-        break;
-      case "notifications":
-        initFunctions[key](
-          notificationWatcherInstance,
-          value as { name: Notifications; connection: any }[]
-        );
-        break;
-      default:
-        break;
-    }
-  }
+  // for (const [key, value] of Object.entries(config.packages)) {
+  //   switch (key) {
+  //     case "errors":
+  //       initFunctions[key](exceptionWatcherInstance, value as Errors[]);
+  //       break;
+  //     case "requests":
+  //       initFunctions[key](queryWatcherInstance, value as Requests);
+  //       break;
+  //     case "http":
+  //       initFunctions[key](queryWatcherInstance, value as Http[]);
+  //       break;
+  //     case "jobs":
+  //       initFunctions[key](
+  //         jobWatcherInstance,
+  //         value as { name: Jobs; connection: any }[]
+  //       );
+  //       break;
+  //     case "logging":
+  //       initFunctions[key](
+  //         logWatcherInstance,
+  //         value as { name: Logger; connection: any }[]
+  //       );
+  //       break;
+  //     case "scheduler":
+  //       initFunctions[key](
+  //         scheduleWatcherInstance,
+  //         value as { name: Scheduler; connection: any }[]
+  //       );
+  //       break;
+  //     case "mailer":
+  //       initFunctions[key](mailWatcherInstance, value as { name: Mailer }[]);
+  //       watchers.mailer = mailWatcherInstance;
+  //       break;
+  //     case "cache":
+  //       initFunctions[key](
+  //         cacheWatcherInstance,
+  //         value as { name: Cache; connection: any }[]
+  //       );
+  //       break;
+  //     case "notifications":
+  //       initFunctions[key](
+  //         notificationWatcherInstance,
+  //         value as { name: Notifications; connection: any }[]
+  //       );
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  // }
   console.log("Observatory is ready to use!");
   return "Observatory is ready to use!";
 }
